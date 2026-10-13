@@ -1,0 +1,81 @@
+---
+/**
+ * [SAYFA: ETKİNLİKLER]
+ * Amaç: Yayındaki etkinlikleri (zirve, eğitim, bootcamp...) arama, konum tipi, şehir ve tarih
+ *       sıralamasıyla listelemek. Varsayılan olarak yalnızca bitmemiş etkinlikler gösterilir.
+ * Referans: youthside-2026-ui/etkinlikler/index.php · Veri: GET events/list
+ */
+import { CalendarX } from 'lucide-react';
+import FilterBar from '@/components/filters/FilterBar';
+import { ROUTES } from '@/config/site';
+import EventCard from '@/features/events/components/EventCard.astro';
+import { EVENT_LOCATION_TYPES, EVENT_PARAMS, EVENT_SORTS, parseEventFilters } from '@/features/events/lib/event-filters';
+import { createSafeLoader } from '@/core/safe';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CardGrid from '@/shared/ui/CardGrid.astro';
+import Container from '@/shared/ui/Container.astro';
+import ErrorNotice from '@/shared/ui/ErrorNotice.astro';
+import PageHeader from '@/shared/ui/PageHeader.astro';
+import PaginationNav from '@/shared/ui/PaginationNav.astro';
+
+const { events, lookups } = Astro.locals.services;
+const { filters, values, sortKey, includePast } = parseEventFilters(Astro.url.searchParams);
+
+const safe = createSafeLoader('ETKINLIKLER');
+const [result, cities] = await Promise.all([
+  safe(events.list(filters), 'Etkinlik listesi'),
+  lookups.cities(),
+]);
+
+const groups = [
+  { key: EVENT_PARAMS.locationTypes, label: 'Katılım şekli', options: EVENT_LOCATION_TYPES, icon: 'globe' as const },
+  { key: EVENT_PARAMS.cities, label: 'Şehir', options: cities, icon: 'map-pin' as const },
+].filter((group) => group.options.length > 0);
+
+const hasFilters = Boolean(filters.q) || Object.values(values).some((list) => list.length > 0);
+---
+
+<BaseLayout
+  title="Kariyer Etkinlikleri"
+  description="Zirveler, eğitimler, bootcamp'ler ve kariyer buluşmaları. Şirketlerin ve üniversite kulüplerinin etkinliklerine ücretsiz kaydol."
+>
+  <PageHeader
+    eyebrow="Öğren, tanış, gelişe"
+    title="Etkinlikler"
+    description="Şirketlerin ve kulüplerin düzenlediği zirve, eğitim ve buluşmalara kaydol."
+    breadcrumbs={[{ label: 'Etkinlikler' }]}
+  >
+    <FilterBar
+      client:load
+      basePath={ROUTES.events}
+      searchPlaceholder="Etkinlik, şirket veya kulüp ara"
+      groups={groups}
+      sorts={EVENT_SORTS}
+      toggle={{ key: EVENT_PARAMS.includePast, label: 'Geçmiş etkinlikler' }}
+      initial={{ q: filters.q, values, sort: sortKey, toggle: includePast }}
+      total={result?.total ?? 0}
+      resultNoun="etkinlik"
+    />
+  </PageHeader>
+
+  <Container class="py-10 md:py-14">
+    {
+      result === null ? (
+        <ErrorNotice />
+      ) : (
+        <>
+          <CardGrid
+            isEmpty={result.items.length === 0}
+            emptyIcon={CalendarX}
+            emptyTitle={hasFilters ? 'Aramana uygun etkinlik bulunamadı' : 'Yaklaşan etkinlik bulunmuyor'}
+            emptyDescription={includePast ? undefined : 'Geçmiş etkinliklere göz atmak için "Geçmiş etkinlikler" filtresini açabilirsin.'}
+            emptyAction={hasFilters ? { label: 'Filtreleri temizle', href: ROUTES.events } : { label: 'Geçmiş etkinlikleri göster', href: `${ROUTES.events}?${EVENT_PARAMS.includePast}=1` }}
+          >
+            {result.items.map((event, index) => <EventCard event={event} eager={index < 3} />)}
+          </CardGrid>
+          <PaginationNav page={result.page} totalPages={result.totalPages} url={Astro.url} />
+        </>
+      )
+    }
+  </Container>
+</BaseLayout>

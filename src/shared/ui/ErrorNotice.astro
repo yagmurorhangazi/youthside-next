@@ -1,0 +1,30 @@
+---
+/**
+ * [MODÜL: VERİ HATASI BİLDİRİMİ — UI GENİŞLETMESİ]
+ * Amaç: API'ye ulaşılamadığında sayfayı çökertmek yerine anlaşılır bir mesaj ve yeniden dene
+ *       aksiyonu göstermek. Teknik detay kullanıcıya gösterilmez (sunucu loguna yazılır).
+ */
+import { RefreshCw, WifiOff } from 'lucide-react';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'İçerik şu anda yüklenemedi',
+  description = 'Sunucuya ulaşırken bir sorun oluştu. Birkaç saniye sonra tekrar deneyebilirsin.',
+} = Astro.props;
+---
+
+<div role="alert" class="flex flex-col items-center rounded-3xl border border-amber-200 bg-amber-50/60 px-6 py-14 text-center">
+  <div class="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-amber-500 shadow-sm">
+    <WifiOff size={30} aria-hidden="true" />
+  </div>
+  <h2 class="text-lg font-bold text-gray-900">{title}</h2>
+  <p class="mt-2 max-w-md text-sm text-gray-600">{description}</p>
+  <a href={Astro.url.pathname + Astro.url.search} class="mt-6 inline-flex items-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-gray-700">
+    <RefreshCw size={16} aria-hidden="true" />
+    Tekrar dene
+  </a>
+</div>

@@ -1,0 +1,13 @@
+---
+/**
+ * [SAYFA: İLAN KALICI LİNKİ]
+ * URL: /ilan/{ilan-slug} → /{şirket-slug}/ilanlar/{ilan-slug} (301)
+ * Neden: Bazı API uçları (applications/my-list) şirket slug'ı döndürmüyor. İlan slug'ı global
+ * benzersiz olduğundan tam adres sunucuda çözülür. Paylaşım için de kısa link sağlar.
+ */
+import { ROUTES } from '@/config/site';
+
+const job = await Astro.locals.services.jobs.getBySlug(Astro.params.slug ?? '');
+if (!job) return Astro.rewrite('/404');
+return Astro.redirect(ROUTES.jobDetail(job.company.slug, job.slug), 301);
+---

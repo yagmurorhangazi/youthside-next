@@ -1,0 +1,70 @@
+---
+/**
+ * [MODÜL: SAYFALAMA (LİNK TABANLI) — UI GENİŞLETMESİ]
+ * Amaç: Liste sonuçlarında sayfalar arasında gezinmek.
+ * Neden kit'teki Pagination değil: O bileşen `onPageChange` callback'i ile JS ister. Burada her sayfa
+ *       gerçek bir link (`?sayfa=3`) olur: JS'siz çalışır, arama motoru tüm sayfaları tarar.
+ */
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { withPage } from '@/shared/lib/search-params';
+
+interface Props {
+  page: number;
+  totalPages: number;
+  url: URL;
+}
+
+const { page, totalPages, url } = Astro.props;
+
+/** 1 … 4 5 [6] 7 8 … 20 biçiminde görünür sayfa listesi. */
+function visiblePages(current: number, total: number): (number | 'gap')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = new Set([1, total, current - 1, current, current + 1]);
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  return sorted.flatMap((p, i) => (i > 0 && p - sorted[i - 1] > 1 ? ['gap' as const, p] : [p]));
+}
+
+const items = visiblePages(page, totalPages);
+const baseItem = 'flex h-11 min-w-11 items-center justify-center rounded-xl px-3 text-sm font-bold transition';
+---
+
+{
+  totalPages > 1 && (
+    <nav aria-label="Sayfalama" class="mt-10 flex items-center justify-center gap-1.5">
+      {page > 1 ? (
+        <a href={withPage(url, page - 1)} rel="prev" class:list={[baseItem, 'border border-gray-200 bg-white text-gray-700 hover:border-primary-300 hover:text-primary-700']} aria-label="Önceki sayfa">
+          <ChevronLeft size={18} />
+        </a>
+      ) : (
+        <span class:list={[baseItem, 'border border-gray-100 text-gray-300']} aria-hidden="true"><ChevronLeft size={18} /></span>
+      )}
+
+      <ol class="hidden items-center gap-1.5 sm:flex">
+        {items.map((item) =>
+          item === 'gap' ? (
+            <li class="px-1 text-gray-400">…</li>
+          ) : (
+            <li>
+              <a
+                href={withPage(url, item)}
+                aria-current={item === page ? 'page' : undefined}
+                class:list={[baseItem, item === page ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' : 'text-gray-600 hover:bg-gray-100']}
+              >
+                {item}
+              </a>
+            </li>
+          ),
+        )}
+      </ol>
+      <span class="px-3 text-sm font-semibold text-gray-600 sm:hidden">{page} / {totalPages}</span>
+
+      {page < totalPages ? (
+        <a href={withPage(url, page + 1)} rel="next" class:list={[baseItem, 'border border-gray-200 bg-white text-gray-700 hover:border-primary-300 hover:text-primary-700']} aria-label="Sonraki sayfa">
+          <ChevronRight size={18} />
+        </a>
+      ) : (
+        <span class:list={[baseItem, 'border border-gray-100 text-gray-300']} aria-hidden="true"><ChevronRight size={18} /></span>
+      )}
+    </nav>
+  )
+}

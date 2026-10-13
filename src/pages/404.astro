@@ -1,0 +1,43 @@
+---
+/**
+ * [SAYFA: 404 — BULUNAMADI]
+ * Amaç: Olmayan adres veya yayından kalkmış ilan/etkinlik/şirket için yönlendirici bir sayfa.
+ * Detay sayfaları kayıt bulunamadığında `Astro.rewrite('/404')` ile buraya düşer.
+ */
+import { Briefcase, Building2, CalendarDays, SearchX } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Container from '@/shared/ui/Container.astro';
+
+Astro.response.status = 404;
+
+const shortcuts = [
+  { label: 'İlanlar', href: ROUTES.jobs, icon: Briefcase },
+  { label: 'Etkinlikler', href: ROUTES.events, icon: CalendarDays },
+  { label: 'Şirketler', href: ROUTES.companies, icon: Building2 },
+];
+---
+
+<BaseLayout title="Sayfa bulunamadı" description="Aradığın sayfa taşınmış veya yayından kaldırılmış olabilir." noindex muted>
+  <Container size="narrow" class="py-20 text-center md:py-28">
+    <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary-50 text-primary-600">
+      <SearchX size={38} aria-hidden="true" />
+    </div>
+    <p class="text-sm font-bold uppercase tracking-wider text-primary-600">404</p>
+    <h1 class="mt-2 text-3xl font-black tracking-tight text-gray-900 md:text-4xl">Aradığın sayfayı bulamadık</h1>
+    <p class="mx-auto mt-4 max-w-md text-gray-600">
+      Bağlantı hatalı olabilir ya da ilan, etkinlik veya şirket sayfası yayından kaldırılmış olabilir.
+    </p>
+    <div class="mt-8 grid gap-3 sm:grid-cols-3">
+      {
+        shortcuts.map(({ label, href, icon: Icon }) => (
+          <a href={href} class="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-4 font-bold text-gray-800 transition hover:border-primary-300 hover:text-primary-700">
+            <Icon size={18} aria-hidden="true" />
+            {label}
+          </a>
+        ))
+      }
+    </div>
+    <a href={ROUTES.home} class="mt-6 inline-block text-sm font-semibold text-gray-500 hover:text-primary-600">Ana sayfaya dön</a>
+  </Container>
+</BaseLayout>

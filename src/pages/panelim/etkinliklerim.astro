@@ -1,0 +1,39 @@
+---
+/**
+ * [SAYFA: PANELİM — ETKİNLİKLERİM]
+ * Veri: registrations/my-events (iptal edilmemiş kayıtlar, sayfalı)
+ */
+import { CalendarCheck } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import { createSafeLoader } from '@/core/safe';
+import PanelLayout from '@/features/candidate/components/PanelLayout.astro';
+import ParticipationRow from '@/features/candidate/components/ParticipationRow.astro';
+import { registrationRow } from '@/features/candidate/lib/participation-display';
+import { getPage } from '@/shared/lib/search-params';
+import CardGrid from '@/shared/ui/CardGrid.astro';
+import ErrorNotice from '@/shared/ui/ErrorNotice.astro';
+import PaginationNav from '@/shared/ui/PaginationNav.astro';
+
+const result = await createSafeLoader('ETKINLIKLERIM')(Astro.locals.services.candidate.myEvents(getPage(Astro.url.searchParams)), 'Kayıtlar');
+---
+
+<PanelLayout title="Etkinliklerim" description="Kaydolduğun etkinlikler ve katılım durumların.">
+  {
+    result === null ? (
+      <ErrorNotice />
+    ) : result.items.length === 0 ? (
+      <CardGrid
+        isEmpty
+        emptyIcon={CalendarCheck}
+        emptyTitle="Henüz bir etkinliğe kaydolmadın"
+        emptyDescription="Zirve, eğitim ve kariyer buluşmalarıyla kendini geliştir."
+        emptyAction={{ label: 'Etkinlikleri keşfet', href: ROUTES.events }}
+      />
+    ) : (
+      <>
+        <ul class="space-y-3">{result.items.map((item) => <ParticipationRow {...registrationRow(item)} />)}</ul>
+        <PaginationNav page={result.page} totalPages={result.totalPages} url={Astro.url} />
+      </>
+    )
+  }
+</PanelLayout>

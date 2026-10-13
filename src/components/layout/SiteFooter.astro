@@ -1,0 +1,78 @@
+---
+/**
+ * [MODÜL: SİTE FOOTER]
+ * Amaç: Marka özeti, sosyal medya, link kolonları ve yasal linkler.
+ * DRY: Tüm içerik `config/site.ts`'den gelir; footer yalnızca yerleşimden sorumludur.
+ *
+ * Mobil: Marka bloğu tam genişlik, link kolonları 2'li grid; masaüstünde 4 kolon.
+ */
+import { FOOTER_COLUMNS, LEGAL_LINKS, ROUTES, SITE, SOCIAL_LINKS } from '@/config/site';
+import SocialIcon from './SocialIcon.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="relative overflow-hidden border-t border-gray-800 bg-gray-900 pb-10 pt-16 text-white md:pt-20" style="view-transition-name: site-footer">
+  <!-- Dekoratif parıltı -->
+  <div class="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-primary-900 opacity-20 blur-[120px]" aria-hidden="true"></div>
+
+  <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="mb-12 grid grid-cols-2 gap-x-6 gap-y-10 border-b border-gray-800 pb-12 md:grid-cols-4">
+      <!-- Marka -->
+      <div class="col-span-2 md:col-span-1">
+        <a href={ROUTES.home} class="mb-6 block" aria-label={`${SITE.name} ana sayfa`}>
+          <img src={SITE.logoWhite} alt={`${SITE.name} logo`} class="w-40" loading="lazy" />
+        </a>
+        <p class="mb-6 max-w-xs text-sm leading-relaxed text-gray-400">{SITE.defaultDescription}</p>
+        <div class="flex gap-3">
+          {
+            SOCIAL_LINKS.map(({ label, href, platform }) => (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                class="flex h-11 w-11 items-center justify-center rounded-full bg-gray-800 text-gray-400 transition hover:-translate-y-0.5 hover:bg-primary-600 hover:text-white"
+              >
+                <SocialIcon platform={platform} />
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Link kolonları -->
+      {
+        FOOTER_COLUMNS.map((column) => (
+          <nav aria-label={column.title}>
+            <h2 class="mb-5 text-sm font-bold uppercase tracking-wider text-white">{column.title}</h2>
+            <ul class="space-y-3 text-sm text-gray-400">
+              {column.links.map((link) => (
+                <li>
+                  <a href={link.href} class="inline-block py-0.5 transition hover:text-primary-500">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))
+      }
+    </div>
+
+    <div class="flex flex-col-reverse items-center justify-between gap-4 text-xs text-gray-500 md:flex-row">
+      <p>&copy; {year} {SITE.name}. Tüm hakları saklıdır.</p>
+      <ul class="flex flex-wrap justify-center gap-x-6 gap-y-2">
+        {
+          LEGAL_LINKS.map((link) => (
+            <li>
+              <a href={link.href} class="transition hover:text-gray-300">
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</footer>

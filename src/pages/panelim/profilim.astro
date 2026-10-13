@@ -1,0 +1,38 @@
+---
+/**
+ * [SAYFA: PANELİM — PROFİLİM]
+ * Referans: youthside-2026-ui/panelim/profilim/index.php
+ * Veri: auth/me (profil) · candidates/profile-completeness
+ * ?redirect=/… → başvuru akışından gelindiyse, profil yeterli olunca ilana dönüş düğmesi gösterilir.
+ */
+import { safeRedirect } from '@/config/site';
+import { createSafeLoader } from '@/core/safe';
+import ChangePasswordForm from '@/features/candidate/components/ChangePasswordForm';
+import CompletenessCard from '@/features/candidate/components/CompletenessCard.astro';
+import MediaUploads from '@/features/candidate/components/MediaUploads';
+import PanelLayout from '@/features/candidate/components/PanelLayout.astro';
+import ProfileDetailsForm from '@/features/candidate/components/ProfileDetailsForm';
+import ErrorNotice from '@/shared/ui/ErrorNotice.astro';
+
+const { candidate } = Astro.locals.services;
+const safe = createSafeLoader('PROFILIM');
+const [profile, completeness] = await Promise.all([safe(candidate.getProfile(), 'Profil'), safe(candidate.getCompleteness(), 'Doluluk')]);
+
+const rawReturn = Astro.url.searchParams.get('redirect');
+const returnTo = rawReturn ? safeRedirect(rawReturn) : null;
+---
+
+<PanelLayout title="Profilim" description="Bilgilerin başvurularına otomatik eklenir. Eksiksiz bir profil öne çıkmanı sağlar.">
+  {
+    profile === null ? (
+      <ErrorNotice title="Profil bilgilerin yüklenemedi" />
+    ) : (
+      <div class="space-y-6">
+        {completeness && <CompletenessCard completeness={completeness} showLink={false} />}
+        <MediaUploads client:visible name={profile.fullName} avatarUrl={profile.avatarUrl} resumeUrl={profile.resumeUrl} />
+        <ProfileDetailsForm client:load profile={profile} returnTo={returnTo} />
+        <ChangePasswordForm client:visible />
+      </div>
+    )
+  }
+</PanelLayout>

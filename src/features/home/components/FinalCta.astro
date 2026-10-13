@@ -1,0 +1,36 @@
+---
+/**
+ * [MODÜL: ANA SAYFA — KAPANIŞ ÇAĞRISI]
+ * Amaç: Sayfanın sonunda kullanıcıyı ücretsiz kayda yönlendirmek.
+ */
+import { Rocket } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+---
+
+<section class="relative overflow-hidden bg-gray-900 py-16 md:py-20">
+  <div
+    class="absolute inset-0 opacity-10"
+    style="background-image: radial-gradient(var(--color-primary-500) 1px, transparent 1px); background-size: 30px 30px;"
+    aria-hidden="true"
+  >
+  </div>
+
+  <div class="relative z-10 mx-auto max-w-4xl px-4 text-center">
+    <h2 class="mb-6 text-3xl font-extrabold text-white md:text-5xl">
+      Kariyer Yolculuğunda<br />Yalnız Değilsin.
+    </h2>
+    <p class="mx-auto mb-10 max-w-2xl text-base text-gray-300 md:text-lg">
+      Kayıt ol, profilini doldur ve hayalindeki kariyere giden ilk adımı bugün at. Yüzlerce şirket yeni yeteneklerini arıyor.
+    </p>
+    <a
+      href={ROUTES.register}
+      class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-10 py-4 text-lg font-bold text-gray-900 shadow-2xl shadow-white/10 transition hover:scale-105 hover:bg-gray-100 sm:w-auto"
+    >
+      Ücretsiz Profil Oluştur
+      <Rocket size={20} aria-hidden="true" />
+    </a>
+    <p class="mt-6 text-sm text-gray-500">
+      Öğrenciler ve yeni mezunlar için her zaman <strong class="text-gray-300">ücretsiz.</strong>
+    </p>
+  </div>
+</section>

@@ -1,0 +1,339 @@
+---
+/**
+ * [MODÜL: ANA SAYFA — HERO]
+ * Amaç: Değer önerisi, birincil aksiyonlar, canlı platform istatistikleri ve ilan vitrini.
+ * Veri: İlanlar ve istatistikler sayfadan prop olarak gelir; bileşen veri kaynağını bilmez (DIP).
+ *       Giriş yapmış adayda vitrin "Senin için öneriler" (jobs/recommended), misafirde
+ *       "Öne çıkan ilanlar" (sabitlenmiş ilanlar önce gelir) başlığıyla gösterilir.
+ *
+ * Mobil: Metin ortalı, vitrin kartı alta iner; dekoratif bildirim kartları taşmasın diye
+ *        küçük ekranda içeride konumlanır.
+ */
+import { ArrowRight, BadgeCheck, CircleCheck, Sparkles } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import type { JobSummary } from '@/features/jobs/types';
+import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
+
+interface Props {
+  recommendedJobs: JobSummary[];
+  /** Platform istatistikleri (API toplamlarından). */
+  stats: { value: string; label: string }[];
+  isPersonalized: boolean;
+  isLoggedIn: boolean;
+}
+
+const { recommendedJobs, stats, isPersonalized, isLoggedIn } = Astro.props;
+const [featured, ...others] = recommendedJobs;
+const jobHref = (job: JobSummary) => ROUTES.jobDetail(job.company.slug, job.slug);
+const tagsOf = (job: JobSummary) => [job.type, job.workModel, job.category].filter((tag): tag is string => Boolean(tag)).slice(0, 3);
+---
+
+<section class="hero relative overflow-hidden pb-20 pt-12 sm:pt-16 lg:pb-28 lg:pt-20">
+  <!-- Dekoratif arka plan katmanları -->
+  <div class="aurora aurora-1" aria-hidden="true"></div>
+  <div class="aurora aurora-2" aria-hidden="true"></div>
+  <div class="aurora aurora-3" aria-hidden="true"></div>
+  <div class="dot-grid" aria-hidden="true"></div>
+
+  <div class="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8">
+    <!-- Sol: Metin & CTA -->
+    <div class="text-center lg:text-left">
+      <h1 class="mb-6 text-5xl font-black leading-[0.95] tracking-tighter text-gray-900 sm:text-7xl lg:text-[5.5rem] xl:text-[6.25rem]">
+        Geleceğini<br />
+        <span class="gradient-text">Tasarla.</span>
+      </h1>
+
+      <p class="mx-auto mb-10 max-w-lg text-lg leading-relaxed text-gray-500 md:text-xl lg:mx-0">
+        Türkiye'nin en yenilikçi şirketlerindeki staj, iş ve etkinlik fırsatlarını tek platformda keşfet. Tek tıkla başvur.
+      </p>
+
+      <div class="mb-12 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+        <a href={isLoggedIn ? ROUTES.jobs : ROUTES.register} class="btn-hero-primary group">
+          {isLoggedIn ? 'İlanları Keşfet' : 'Hemen Üye Ol'}
+          <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
+        </a>
+        <a href={isLoggedIn ? ROUTES.dashboard : ROUTES.jobs} class="btn-hero-ghost">{isLoggedIn ? 'Panelime Git' : 'İlanları Keşfet'}</a>
+      </div>
+
+      <dl class="flex items-center justify-center gap-6 sm:gap-8 lg:justify-start">
+        {
+          stats.map((stat, index) => (
+            <>
+              {index > 0 && <div class="stat-sep" aria-hidden="true" />}
+              <div class="flex flex-col-reverse text-center lg:text-left">
+                <dt class="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">{stat.label}</dt>
+                <dd class="text-2xl font-black text-gray-900 lg:text-3xl">{stat.value}</dd>
+              </div>
+            </>
+          ))
+        }
+      </dl>
+    </div>
+
+    <!-- Sağ: Öneri vitrini -->
+    {
+      featured && (
+        <div class="relative mx-auto w-full max-w-sm py-8 lg:py-10">
+          <div class="absolute inset-0 scale-90 rounded-[3rem] bg-linear-to-br from-primary-300/25 via-orange-200/15 to-purple-300/15 blur-3xl" aria-hidden="true" />
+
+          <div class="mockup relative">
+            <div class="mb-5 flex items-center justify-between">
+              <p class="text-base font-extrabold text-gray-900">{isPersonalized ? 'Senin İçin Öneriler' : 'Öne Çıkan İlanlar'}</p>
+              <span class="flex items-center gap-1.5 rounded-full border border-green-100 bg-green-50 px-3 py-1.5">
+                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" aria-hidden="true" />
+                <span class="text-xs font-semibold text-green-700">{recommendedJobs.length} ilan</span>
+              </span>
+            </div>
+
+            <ul class="space-y-3">
+              <li>
+                <a href={jobHref(featured)} class="featured-card group block">
+                  <div class="mb-4 flex items-center gap-3">
+                    <CompanyLogo name={featured.company.name} src={featured.company.logoUrl} size="sm" />
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-sm font-bold text-white">{featured.company.name}</p>
+                      <p class="truncate text-xs text-orange-100">
+                        {[featured.locations.join(', '), featured.type].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                    {(featured.isPinned || featured.isFeatured) && <span class="shrink-0 rounded-full bg-white/20 px-2 py-1 text-[10px] font-bold text-white">ÖNE ÇIKAN</span>}
+                  </div>
+                  <p class="mb-3 text-base font-extrabold text-white decoration-orange-200 underline-offset-2 group-hover:underline">{featured.title}</p>
+                  <div class="flex flex-wrap gap-2">
+                    {tagsOf(featured).map((category) => (
+                      <span class="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white/90">{category}</span>
+                    ))}
+                  </div>
+                </a>
+              </li>
+              {others.map((job) => (
+                <li>
+                  <a href={jobHref(job)} class="job-row group flex items-center gap-3">
+                    <CompanyLogo name={job.company.name} src={job.company.logoUrl} size="sm" />
+                    <div class="min-w-0 flex-1">
+                      <p class="mb-0.5 truncate text-[11px] text-gray-400">
+                        {[job.company.name, job.type].filter(Boolean).join(' · ')}
+                      </p>
+                      <p class="truncate text-sm font-bold text-gray-900 transition-colors group-hover:text-primary-600">{job.title}</p>
+                    </div>
+                    {job.workModel && <span class="shrink-0 rounded-full bg-primary-50 px-2 py-1 text-[10px] font-bold text-primary-600">{job.workModel}</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+
+            <a href={ROUTES.jobs} class="mt-5 flex items-center justify-center gap-1.5 text-sm font-bold text-primary-600 transition-colors hover:text-primary-700">
+              Tüm ilanları gör
+              <ArrowRight size={16} aria-hidden="true" />
+            </a>
+          </div>
+
+          <!-- Dekoratif bildirimler -->
+          <div class="notif float-down absolute -top-2 right-0 z-20 sm:-right-10" aria-hidden="true">
+            <span class="flex h-8 w-8 items-center justify-center rounded-full border border-green-100 bg-green-50 text-green-500">
+              <CircleCheck size={16} />
+            </span>
+            <p class="text-[13px] font-bold text-gray-900">Tek tıkla başvuru</p>
+          </div>
+          <div class="notif float-up absolute -bottom-2 left-0 z-20 sm:-left-10" aria-hidden="true">
+            <span class="flex h-8 w-8 items-center justify-center rounded-full border border-primary-100 bg-primary-50 text-primary-600">
+              <Sparkles size={16} />
+            </span>
+            <div>
+              <p class="text-[13px] font-bold text-gray-900">Akıllı Eşleşme</p>
+              <p class="flex items-center gap-1 text-[10px] text-gray-500"><BadgeCheck size={11} /> Profiline uygun ilanlar</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  /* Referans: youthside-2026-ui/css/home.css — yalnızca Tailwind ile ifade edilemeyen efektler burada. */
+  .hero {
+    background: linear-gradient(145deg, #fdf0ea 0%, #f7f3ff 50%, #eaf3ff 100%);
+  }
+
+  .aurora {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(100px);
+    opacity: 0.5;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .aurora-1 {
+    width: 600px;
+    height: 600px;
+    top: -160px;
+    left: -160px;
+    background: radial-gradient(circle, #f8a07a, var(--color-primary-700));
+    animation: aurora-1 20s ease-in-out infinite;
+  }
+  .aurora-2 {
+    width: 450px;
+    height: 450px;
+    top: 35%;
+    right: -150px;
+    background: radial-gradient(circle, #c4b5fd, #7c3aed);
+    animation: aurora-2 24s ease-in-out infinite;
+  }
+  .aurora-3 {
+    width: 380px;
+    height: 380px;
+    bottom: -80px;
+    left: 36%;
+    background: radial-gradient(circle, #93c5fd, #3b82f6);
+    animation: aurora-3 18s ease-in-out infinite;
+  }
+  @keyframes aurora-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(80px, 100px) scale(1.1); }
+    66% { transform: translate(-50px, 50px) scale(0.95); }
+  }
+  @keyframes aurora-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-100px, -70px) scale(1.15); }
+    66% { transform: translate(70px, -50px) scale(0.9); }
+  }
+  @keyframes aurora-3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-70px, -90px) scale(1.2); }
+  }
+
+  .dot-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, rgb(0 0 0 / 0.07) 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 80%);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--color-primary-700) 0%, #f59e0b 55%, var(--color-primary-700) 100%);
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: gradient-shift 4.5s ease infinite;
+  }
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% center; }
+    50% { background-position: 100% center; }
+  }
+
+  .btn-hero-primary,
+  .btn-hero-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: 0 30px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .btn-hero-primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--color-primary-700) 0%, #f37047 100%);
+    box-shadow: 0 4px 24px rgb(240 76 17 / 0.45), 0 1px 4px rgb(0 0 0 / 0.12);
+  }
+  .btn-hero-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 36px rgb(240 76 17 / 0.52), 0 2px 8px rgb(0 0 0 / 0.14);
+  }
+  .btn-hero-ghost {
+    color: #1f2937;
+    background: #fff;
+    border: 1.5px solid #d1d5db;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+  }
+  .btn-hero-ghost:hover {
+    transform: translateY(-2px);
+    color: var(--color-primary-700);
+    border-color: var(--color-primary-700);
+  }
+
+  .stat-sep {
+    width: 1px;
+    height: 38px;
+    flex-shrink: 0;
+    background: linear-gradient(to bottom, transparent, #d1d5db, transparent);
+  }
+
+  .mockup {
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 28px;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.03),
+      0 8px 24px rgb(0 0 0 / 0.08),
+      0 24px 64px rgb(0 0 0 / 0.1),
+      0 40px 80px rgb(240 76 17 / 0.08);
+  }
+
+  .featured-card {
+    position: relative;
+    overflow: hidden;
+    padding: 18px;
+    border-radius: 18px;
+    background: linear-gradient(140deg, var(--color-primary-700) 0%, #bf3a08 100%);
+  }
+  .featured-card::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 150px;
+    height: 150px;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.08);
+    pointer-events: none;
+  }
+
+  .job-row {
+    padding: 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .job-row:hover {
+    background: #fff;
+    border-color: #fbd5c8;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.07);
+    transform: translateX(3px);
+  }
+
+  .notif {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    white-space: nowrap;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.08), 0 12px 32px rgb(0 0 0 / 0.1);
+  }
+  .float-up {
+    animation: float-up 8s ease-in-out infinite;
+  }
+  .float-down {
+    animation: float-down 9.5s ease-in-out infinite;
+  }
+  @keyframes float-up {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes float-down {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+</style>

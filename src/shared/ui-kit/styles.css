@@ -1,0 +1,138 @@
+/**
+ * Youthside UI — Tailwind ile üretilemeyen özel animasyon ve scrollbar stilleri.
+ *
+ * DİKKAT: Bu dosyaya @tailwind base/components/utilities KOYMAYIN.
+ * Tailwind katmanları tüketici projenin kendi CSS girişinden gelir; buraya
+ * eklenirse reset iki kez uygulanır ve stil çakışmaları oluşur.
+ *
+ * Kullanım (tüketici projede, Tailwind girişinden SONRA):
+ *   import '@ferhatcengz/youthside-ui-kit/styles.css';
+ */
+
+/* ─── Skeleton Shimmer Animasyonu ─── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(226 232 240 / 0.6) 25%,
+    /* slate-200/60 */ rgb(241 245 249 / 0.8) 37%,
+    /* slate-100/80 */ rgb(226 232 240 / 0.6) 63% /* slate-200/60 */
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ─── Fade-in Animasyonu ─── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out both;
+}
+
+/* ─── Progress Bar Animasyonu ─── */
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-progress {
+  animation: progress 1.5s ease-in-out infinite;
+}
+
+/* ─── Pending Pulse (Mutation feedback) ─── */
+@keyframes pendingPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pending {
+  animation: pendingPulse 1.2s ease-in-out infinite;
+}
+
+/* Yatay kolon taşmalarında scroll keşfedilebilirliğini artırır */
+.pipeline-horizontal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.9) transparent;
+}
+
+.pipeline-horizontal-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.pipeline-horizontal-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pipeline-horizontal-scroll::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.85);
+  border-radius: 9999px;
+}
+
+.pipeline-horizontal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139 / 0.95);
+}
+
+/* ─── Kaydırma çubuğunu gizle (yatay menüler, rail listesi) ─── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── iOS ana ekran çubuğu için alt güvenli alan (BottomNav) ─── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ─── Kompakt rail'de aktif öğe parıltısı (primary-700 tonunda) ─── */
+.rail-active-glow {
+  box-shadow: 0 0 15px -3px rgba(240, 76, 17, 0.2);
+}
+
+/* ─── Dropdown/popover açılış animasyonu (UserMenu, QuickActionMenu) ─── */
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-dropdown-in {
+  animation: dropdownIn 0.15s ease-out both;
+}

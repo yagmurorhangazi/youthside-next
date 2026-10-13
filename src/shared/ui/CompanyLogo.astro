@@ -1,0 +1,40 @@
+---
+/**
+ * [MODÜL: ŞİRKET LOGOSU — UI GENİŞLETMESİ]
+ * Amaç: Kartlarda şirket logosunu kare çerçevede göstermek; logo yoksa baş harf fallback'i.
+ * Neden Astro: Statik kartlarda JS gerekmez. Görsel yüklenemezse `onerror` ile kaldırılır
+ * ve alttaki baş harf katmanı görünür hale gelir (kırık görsel ikonu gösterilmez).
+ */
+import { getInitials } from '@/shared/lib/text';
+
+interface Props {
+  name: string;
+  src: string | null;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  class?: string;
+}
+
+const { name, src, size = 'md', class: className = '' } = Astro.props;
+const sizeClass = {
+  xs: 'h-7 w-7 text-[10px]',
+  sm: 'h-10 w-10 text-xs',
+  md: 'h-14 w-14 text-sm',
+  lg: 'h-20 w-20 text-lg',
+  xl: 'h-24 w-24 text-xl md:h-32 md:w-32 md:text-2xl',
+}[size];
+---
+
+<div
+  class:list={[
+    'relative flex shrink-0 overflow-hidden border border-slate-100 bg-white',
+    // Satır içi küçük logo gölgesiz ve daha az yuvarlak; büyük boyutlar kart üstünde öne çıkar.
+    size === 'xs' ? 'rounded-lg' : 'rounded-2xl shadow-[0_8px_24px_rgb(15_23_42/0.10)]',
+    sizeClass,
+    className,
+  ]}
+>
+  <span class="absolute inset-0 flex items-center justify-center bg-linear-to-br from-primary-50 to-primary-100 font-black text-primary-700" aria-hidden="true">
+    {getInitials(name)}
+  </span>
+  {src && <img src={src} alt={name} loading="lazy" onerror="this.remove()" class:list={['relative h-full w-full bg-white object-contain', size === 'xs' ? 'p-0.5' : 'p-1.5']} />}
+</div>

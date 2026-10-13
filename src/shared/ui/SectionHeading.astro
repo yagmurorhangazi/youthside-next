@@ -1,0 +1,39 @@
+---
+/**
+ * [MODÜL: BÖLÜM BAŞLIĞI — UI GENİŞLETMESİ]
+ * Amaç: "Başlık + açıklama + tümünü gör linki" kalıbını tek bileşende toplamak.
+ * Neden: Ana sayfada ilanlar, etkinlikler gibi her listeleme bölümü aynı başlık düzenini kullanır (DRY).
+ */
+import { ArrowRight } from 'lucide-react';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Üstte küçük vurgu etiketi (ör. "Neden Youthside?"). */
+  eyebrow?: string;
+  link?: { label: string; href: string };
+  align?: 'left' | 'center';
+}
+
+const { title, description, eyebrow, link, align = 'left' } = Astro.props;
+const centered = align === 'center';
+---
+
+<div class:list={['mb-10 flex gap-5 md:mb-12', centered ? 'flex-col items-center text-center' : 'flex-col md:flex-row md:items-end md:justify-between']}>
+  <div class:list={['max-w-2xl', centered && 'mx-auto']}>
+    {eyebrow && <p class="mb-3 text-sm font-bold uppercase tracking-wide text-primary-600">{eyebrow}</p>}
+    <h2 class="mb-3 text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl md:text-4xl">{title}</h2>
+    {description && <p class="text-base text-gray-600 md:text-lg">{description}</p>}
+  </div>
+  {
+    link && (
+      <a
+        href={link.href}
+        class="group inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-primary-600 shadow-sm transition hover:border-primary-200 hover:text-primary-700 md:self-auto"
+      >
+        {link.label}
+        <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
+      </a>
+    )
+  }
+</div>

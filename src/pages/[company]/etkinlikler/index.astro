@@ -1,0 +1,59 @@
+---
+/**
+ * [SAYFA: PROFİL — ETKİNLİKLER SEKMESİ]
+ * URL: /{slug}/etkinlikler · Referans: youthside-2026-ui/sirket-profili/etkinlikler/index.php
+ * Veri: events/list?company_id= — yaklaşan ve geçmiş etkinlikler ayrı bölümlerde gösterilir.
+ */
+import { CalendarX } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import { createSafeLoader } from '@/core/safe';
+import ProfileLayout from '@/features/companies/components/ProfileLayout.astro';
+import { loadProfileContext } from '@/features/companies/lib/profile-loader';
+import EventCard from '@/features/events/components/EventCard.astro';
+import { getEventDateInfo } from '@/features/events/lib/event-display';
+import CardGrid from '@/shared/ui/CardGrid.astro';
+import ErrorNotice from '@/shared/ui/ErrorNotice.astro';
+
+const slug = Astro.params.company ?? '';
+const services = Astro.locals.services;
+const context = await loadProfileContext(services, slug);
+if (!context) return Astro.rewrite('/404');
+
+// Bir organizatörün etkinlik sayısı sınırlı; tek istekte alınıp aşamaya göre ayrılır.
+const result = await createSafeLoader(`PROFIL:${slug}`)(
+  services.events.list({ companyId: context.profile.id, sort: 'start_date', limit: 60 }),
+  'Etkinlikler',
+);
+const upcoming = (result?.items ?? []).filter((event) => getEventDateInfo(event).phase !== 'ended');
+const past = (result?.items ?? []).filter((event) => getEventDateInfo(event).phase === 'ended').reverse();
+---
+
+<ProfileLayout context={context} active="events" title="Etkinlikleri" description={`${context.profile.name} tarafından düzenlenen etkinlikler.`}>
+  {
+    result === null ? (
+      <ErrorNotice />
+    ) : (
+      <div class="space-y-12">
+        <section aria-labelledby="upcoming-title">
+          <h2 id="upcoming-title" class="mb-6 text-2xl font-extrabold text-gray-900">Yaklaşan etkinlikler</h2>
+          <CardGrid
+            isEmpty={upcoming.length === 0}
+            emptyIcon={CalendarX}
+            emptyTitle="Şu an planlanmış etkinlik yok"
+            emptyAction={{ label: 'Tüm etkinliklere göz at', href: ROUTES.events }}
+          >
+            {upcoming.map((event) => <EventCard event={event} hideCompany />)}
+          </CardGrid>
+        </section>
+        {
+          past.length > 0 && (
+            <section aria-labelledby="past-title">
+              <h2 id="past-title" class="mb-6 text-2xl font-extrabold text-gray-900">Geçmiş etkinlikler</h2>
+              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">{past.map((event) => <EventCard event={event} hideCompany />)}</div>
+            </section>
+          )
+        }
+      </div>
+    )
+  }
+</ProfileLayout>

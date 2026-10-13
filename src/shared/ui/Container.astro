@@ -1,0 +1,19 @@
+---
+/**
+ * [MODÜL: SAYFA KAPSAYICISI — UI GENİŞLETMESİ]
+ * Amaç: Tüm sayfalarda aynı maksimum genişlik ve yan boşluğu kullanmak (DRY).
+ * Mobil: 16px yan boşluk → tablet 24px → masaüstü 32px.
+ */
+interface Props {
+  size?: 'default' | 'narrow' | 'wide';
+  class?: string;
+  as?: 'div' | 'section';
+}
+
+const { size = 'default', class: className = '', as: Tag = 'div' } = Astro.props;
+const width = { default: 'max-w-7xl', narrow: 'max-w-3xl', wide: 'max-w-[90rem]' }[size];
+---
+
+<Tag class:list={['mx-auto w-full px-4 sm:px-6 lg:px-8', width, className]}>
+  <slot />
+</Tag>

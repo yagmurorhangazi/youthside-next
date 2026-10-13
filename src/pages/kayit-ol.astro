@@ -1,0 +1,18 @@
+---
+/**
+ * [SAYFA: KAYIT OL]
+ * Referans: youthside-2026-ui/kayit-ol/index.php · Veri: candidates/platform-register
+ * ?redirect= değeri doğrulama sonrası girişte kullanılmak üzere giriş linkine taşınır.
+ */
+import { ROUTES, safeRedirect } from '@/config/site';
+import AuthLayout from '@/features/auth/components/AuthLayout.astro';
+import RegisterForm from '@/features/auth/components/RegisterForm';
+
+if (Astro.locals.user) return Astro.redirect(ROUTES.dashboard, 302);
+const rawRedirect = Astro.url.searchParams.get('redirect');
+const redirect = rawRedirect ? safeRedirect(rawRedirect) : null;
+---
+
+<AuthLayout title="Kayıt Ol" heading="Ücretsiz hesabını oluştur" subheading="Bir dakikada kaydol, fırsatları kaçırma.">
+  <RegisterForm client:load redirect={redirect} />
+</AuthLayout>

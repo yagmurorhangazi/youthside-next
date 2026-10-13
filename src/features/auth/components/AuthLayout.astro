@@ -1,0 +1,109 @@
+---
+/**
+ * [MODÜL: KİMLİK DOĞRULAMA SAYFA ŞABLONU]
+ * Amaç: Giriş, kayıt ve şifre sayfalarının ortak, odaklı tam ekran düzeni.
+ *   - Sol (lg+): ekran yüksekliğinde sabit marka paneli
+ *   - Sağ: üstte logo / ana sayfa linki, ortada form, altta yasal linkler
+ *
+ * Tasarım kararları:
+ *   - Site menüsü ve footer gizlenir (`chrome="minimal"`): kullanıcı formu tamamlarken dikkat dağılmaz.
+ *   - Form kart içine alınmaz; beyaz zeminde ortalanır (kart içinde kart görüntüsü yok).
+ *   - Sütunlar tam genişliktir; geniş ekranda kenarlarda boşluk/kopukluk oluşmaz.
+ */
+import { ArrowLeft, CalendarCheck, CheckCircle2, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+import { ROUTES, SITE } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+interface Props {
+  title: string;
+  heading: string;
+  subheading?: string;
+}
+
+const { title, heading, subheading } = Astro.props;
+
+const benefits = [
+  { icon: Zap, text: 'Tek profille staj ve iş ilanlarına hızlı başvuru' },
+  { icon: Sparkles, text: 'Bölümüne ve hedeflerine uygun ilan önerileri' },
+  { icon: CalendarCheck, text: 'Zirve, eğitim ve kariyer etkinliklerine ücretsiz katılım' },
+  { icon: CheckCircle2, text: 'Tüm başvurularını tek panelden takip et' },
+];
+const year = new Date().getFullYear();
+---
+
+<BaseLayout title={title} noindex chrome="minimal">
+  <div class="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <!-- Marka paneli (yalnızca masaüstü) -->
+    <aside class="relative hidden bg-gray-950 text-white lg:block">
+      <div class="sticky top-0 flex h-dvh flex-col justify-between overflow-hidden p-10 xl:p-14">
+        <!-- Dekoratif katmanlar -->
+        <div class="pointer-events-none absolute -left-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-primary-600/20 blur-3xl" aria-hidden="true"></div>
+        <div class="pointer-events-none absolute -bottom-40 -right-24 h-[26rem] w-[26rem] rounded-full bg-purple-600/20 blur-3xl" aria-hidden="true"></div>
+        <div
+          class="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:24px_24px] [mask-image:linear-gradient(to_bottom,black,transparent)]"
+          aria-hidden="true"
+        >
+        </div>
+
+        <a href={ROUTES.home} class="relative w-fit" aria-label={`${SITE.name} ana sayfa`}>
+          <img src={SITE.logoWhite} alt={SITE.name} class="h-auto w-36" />
+        </a>
+
+        <div class="relative">
+          <p class="max-w-md text-4xl font-black leading-[1.1] tracking-tight xl:text-5xl">
+            Fırsatları keşfet,<br /><span class="text-primary-400">geleceğini şekillendir.</span>
+          </p>
+          <ul class="mt-10 max-w-md space-y-5">
+            {
+              benefits.map(({ icon: Icon, text }) => (
+                <li class="flex items-center gap-4">
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-primary-300 ring-1 ring-white/10">
+                    <Icon size={19} aria-hidden="true" />
+                  </span>
+                  <span class="text-[15px] font-medium text-gray-300">{text}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <p class="relative flex items-center gap-2 text-xs font-medium text-gray-500">
+          <ShieldCheck size={15} aria-hidden="true" />
+          Bilgilerin KVKK kapsamında güvenle korunur.
+        </p>
+      </div>
+    </aside>
+
+    <!-- Form sütunu -->
+    <div class="flex min-h-dvh flex-col bg-white">
+      <header class="flex items-center justify-between gap-4 px-5 py-5 sm:px-10 sm:py-6">
+        <a href={ROUTES.home} class="lg:invisible" aria-label={`${SITE.name} ana sayfa`}>
+          <img src={SITE.logo} alt={SITE.name} class="h-auto w-28" />
+        </a>
+        <a href={ROUTES.home} class="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-gray-900">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Ana sayfa
+        </a>
+      </header>
+
+      <div class="flex flex-1 items-start justify-center px-5 pb-12 pt-4 sm:items-center sm:px-10 sm:pt-0">
+        <div class="w-full max-w-[420px]">
+          <h1 class="text-[28px] font-black leading-tight tracking-tight text-gray-900 sm:text-[32px]">{heading}</h1>
+          {subheading && <p class="mt-2 text-[15px] leading-6 text-gray-500">{subheading}</p>}
+          <div class="mt-8">
+            <slot />
+          </div>
+        </div>
+      </div>
+
+      <footer class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-gray-100 px-5 py-5 text-xs text-gray-400 sm:justify-between sm:px-10">
+        <span>© {year} {SITE.name}</span>
+        <nav aria-label="Yasal" class="flex gap-5">
+          <a href={ROUTES.agreements('hizmet-sozlesmesi')} class="hover:text-gray-700">Kullanım koşulları</a>
+          <a href={ROUTES.agreements('kvkk')} class="hover:text-gray-700">KVKK</a>
+          <a href={`mailto:${SITE.supportEmail}`} class="hover:text-gray-700">Destek</a>
+        </nav>
+      </footer>
+    </div>
+  </div>
+</BaseLayout>

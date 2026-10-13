@@ -1,0 +1,120 @@
+---
+/**
+ * [MODÜL: İLAN KARTI]
+ * Amaç: Bir ilanı kapak, şirket ve karar vermek için gereken temel bilgilerle listelemek.
+ * SRP: Kart yalnızca görüntüler; son başvuru kuralı `getDeadlineInfo`'da, URL üretimi `ROUTES`'ta.
+ * Neden: Liste ekranında ayrıntı kalabalığı yerine şirket, pozisyon, çalışma biçimi ve son
+ *        başvuru tarihi öne çıkar; ayrıntılı içerik ilan sayfasına bırakılır.
+ */
+import { ArrowUpRight, Briefcase, CalendarClock, House, MapPin, Sparkles } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
+import { getDeadlineInfo, type DeadlineTone } from '../lib/deadline';
+import type { JobSummary } from '../types';
+
+interface Props {
+  job: JobSummary;
+  /** Şirket profili içinde şirket adı tekrar gösterilmez. */
+  hideCompany?: boolean;
+  /** Ekranın ilk görünen kartlarında görsel tembel yüklenmez (LCP). */
+  eager?: boolean;
+}
+
+const { job, hideCompany = false, eager = false } = Astro.props;
+const deadline = getDeadlineInfo(job.expirationDate);
+const location = job.locations.length > 0 ? job.locations.join(', ') : 'Lokasyon belirtilmemiş';
+const href = ROUTES.jobDetail(job.company.slug, job.slug);
+
+/** Aciliyet seviyesinin renk karşılığı (görünüm kararı kartta, iş kuralı lib'de). */
+const toneClass: Record<DeadlineTone, string> = {
+  muted: 'text-gray-400',
+  normal: 'text-gray-500',
+  soon: 'text-amber-600',
+  urgent: 'text-orange-600 font-bold',
+  expired: 'text-red-500',
+};
+---
+
+<article class="group relative flex h-full flex-col overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-card card-interactive focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-500/10">
+  <!-- Kapak -->
+  <div class="relative aspect-[2/1] w-full overflow-hidden bg-linear-to-br from-primary-100 via-orange-50 to-purple-100">
+    {
+      job.coverImageUrl ? (
+        <img
+          src={job.coverImageUrl}
+          alt=""
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+          class="h-full w-full object-cover media-zoom"
+        />
+      ) : (
+        <div class="flex h-full items-center justify-center text-primary-300" aria-hidden="true">
+          <Briefcase size={44} strokeWidth={1.5} />
+        </div>
+      )
+    }
+    <div class="absolute inset-0 bg-linear-to-t from-gray-950/35 via-transparent to-transparent"></div>
+    {
+      (job.isPinned || job.isFeatured) && (
+        <span class="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-white/70 bg-white/95 px-3 py-1.5 text-[11px] font-bold text-primary-700 shadow-sm backdrop-blur-sm">
+          <Sparkles size={13} aria-hidden="true" />
+          Öne çıkan
+        </span>
+      )
+    }
+    <!-- Konumlandırma sarmalayıcıda: CompanyLogo kendi içinde `relative` kullanır -->
+    <div class="absolute -bottom-6 left-4 z-10">
+      <CompanyLogo name={job.company.name} src={job.company.logoUrl} />
+    </div>
+  </div>
+
+  <!-- İçerik -->
+  <div class="flex grow flex-col px-5 pb-5 pt-10 sm:px-6 sm:pb-6">
+    {
+      !hideCompany && (
+        <p class="mb-2 truncate text-xs font-bold uppercase tracking-wider text-primary-600">{job.company.name}</p>
+      )
+    }
+    <h3 class="line-clamp-2 text-lg font-extrabold leading-snug text-gray-900 transition-colors group-hover:text-primary-700 sm:text-xl">
+      <!-- Tüm kart tıklanabilir: link başlıkta, ::after ile kartı kaplar (erişilebilir kart deseni) -->
+      <a href={href} class="outline-none after:absolute after:inset-0 after:content-['']" aria-label={`${job.title} ilanını incele`}>{job.title}</a>
+    </h3>
+    {job.excerpt && <p class="mt-3 line-clamp-2 text-sm leading-6 text-gray-500">{job.excerpt}</p>}
+
+    <div class="mt-5 flex flex-wrap gap-2">
+      {
+        job.type && (
+          <span class="flex items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5 text-[11px] font-bold text-blue-700">
+            <Briefcase size={14} aria-hidden="true" />
+            {job.type}
+          </span>
+        )
+      }
+      {
+        job.workModel && (
+          <span class="flex items-center gap-1.5 rounded-lg border border-teal-100 bg-teal-50 px-2.5 py-1.5 text-[11px] font-bold text-teal-700">
+            <House size={14} aria-hidden="true" />
+            {job.workModel}
+          </span>
+        )
+      }
+    </div>
+
+    <!-- Alt bilgi: en önemli iki karar bilgisi ve kartın devam ettiğini anlatan yönlendirme. -->
+    <div class="mt-auto pt-6">
+      <div class="flex items-center gap-3 border-t border-gray-100 pt-4 text-xs">
+        <span class="flex min-w-0 flex-1 items-center gap-1.5 font-semibold text-gray-500">
+          <MapPin size={15} className="shrink-0 text-primary-500" aria-hidden="true" />
+          <span class="truncate">{location}</span>
+        </span>
+        <span class:list={['flex shrink-0 items-center gap-1.5 font-semibold', toneClass[deadline.tone]]} title="Son başvuru tarihi">
+          <CalendarClock size={15} aria-hidden="true" />
+          {deadline.label}
+        </span>
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-900 text-white transition-colors group-hover:bg-primary-700" aria-hidden="true">
+          <ArrowUpRight size={17} />
+        </span>
+      </div>
+    </div>
+  </div>
+</article>

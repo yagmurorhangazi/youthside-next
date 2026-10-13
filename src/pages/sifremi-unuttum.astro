@@ -1,0 +1,12 @@
+---
+/**
+ * [SAYFA: ŞİFREMİ UNUTTUM]
+ * Referans: youthside-2026-ui/sifremi-unuttum/index.php · Veri: auth/forgot-password (type: candidate)
+ */
+import AuthLayout from '@/features/auth/components/AuthLayout.astro';
+import { ForgotPasswordForm } from '@/features/auth/components/PasswordResetForms';
+---
+
+<AuthLayout title="Şifremi Unuttum" heading="Şifreni mi unuttun?" subheading="E-posta adresini gir, sana şifre sıfırlama bağlantısı gönderelim.">
+  <ForgotPasswordForm client:load />
+</AuthLayout>

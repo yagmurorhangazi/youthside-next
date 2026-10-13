@@ -1,0 +1,67 @@
+---
+/**
+ * [SAYFA: ANA SAYFA]
+ * Amaç: Platformun değer önerisini sunmak ve kullanıcıyı kayıt/başvuru aksiyonuna yönlendirmek.
+ * Referans: youthside-2026-ui/index.php
+ *
+ * Tüm içerik canlı API'den gelir:
+ *   - Vitrin: giriş yapmış adaya jobs/recommended, misafire jobs/list (sabitlenmişler önce)
+ *   - İstatistikler: ilan, şirket ve etkinlik listelerinin toplam sayıları
+ *   - Logo şeridi: companies/list
+ * İstekler paralel atılır; biri hata verirse ilgili bölüm boş durum gösterir, sayfa çökmez.
+ */
+import { createSafeLoader } from '@/core/safe';
+import FeaturesSection from '@/features/home/components/FeaturesSection.astro';
+import FinalCta from '@/features/home/components/FinalCta.astro';
+import HeroSection from '@/features/home/components/HeroSection.astro';
+import LatestEventsSection from '@/features/home/components/LatestEventsSection.astro';
+import LatestJobsSection from '@/features/home/components/LatestJobsSection.astro';
+import TrustedCompanies from '@/features/home/components/TrustedCompanies.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const { jobs, events, companies } = Astro.locals.services;
+const user = Astro.locals.user;
+const safe = createSafeLoader('ANA_SAYFA');
+
+const [latestJobs, upcomingEvents, companyList, clubList, recommended] = await Promise.all([
+  safe(jobs.list({ limit: 6 }), 'Son ilanlar'),
+  safe(events.list({ activeOnly: true, limit: 3 }), 'Etkinlikler'),
+  safe(companies.list({ type: 'company', limit: 24 }), 'Şirketler'),
+  safe(companies.list({ type: 'club', limit: 1 }), 'Kulüpler'),
+  user ? safe(jobs.recommended(3), 'Öneriler') : Promise.resolve(null),
+]);
+
+const isPersonalized = Boolean(recommended && recommended.length > 0);
+const showcase = isPersonalized ? recommended! : (latestJobs?.items.slice(0, 3) ?? []);
+
+/** Sıfır olan istatistik gösterilmez (yeni ortamda "0 ilan" kötü görünür). */
+const stats = [
+  { value: latestJobs?.total ?? 0, label: 'Açık ilan' },
+  { value: (companyList?.total ?? 0) + (clubList?.total ?? 0), label: 'Şirket & kulüp' },
+  { value: upcomingEvents?.total ?? 0, label: 'Yaklaşan etkinlik' },
+]
+  .filter((stat) => stat.value > 0)
+  .map((stat) => ({ value: stat.value.toLocaleString('tr-TR'), label: stat.label }));
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Youthside',
+  url: 'https://youthside.co',
+  logo: 'https://youthsidecdn.doracdn.com/youthside/YouthSide-Logo-1-e1720009952550.png',
+  sameAs: ['https://www.instagram.com/youthsideco/', 'https://www.linkedin.com/company/youthside-co'],
+};
+---
+
+<BaseLayout
+  title="Youthside | Kariyerine Yön Ver"
+  description="Türkiye'nin önde gelen şirketlerindeki staj, iş ve etkinlik fırsatlarını keşfet. Genç yeteneklerin kariyer yolculuğundaki en güçlü destekçisi."
+  schema={organizationSchema}
+>
+  <HeroSection recommendedJobs={showcase} stats={stats} isPersonalized={isPersonalized} isLoggedIn={Boolean(user)} />
+  <TrustedCompanies companies={companyList?.items ?? []} />
+  <FeaturesSection />
+  <LatestJobsSection jobs={latestJobs?.items ?? []} />
+  <LatestEventsSection events={upcomingEvents?.items ?? []} />
+  {!user && <FinalCta />}
+</BaseLayout>

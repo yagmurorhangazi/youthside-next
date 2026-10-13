@@ -1,0 +1,109 @@
+---
+/**
+ * [MODÜL: TEMEL SAYFA LAYOUT'U]
+ * Amaç: Her sayfanın ortak iskeleti — SEO meta, fontlar, header, footer ve çerez paneli.
+ * Referans: youthside-2026-ui/includes/{head,navbar,footer}.php tek layout'ta birleşti (DRY).
+ *
+ * Sayfa yalnızca kendi başlık/açıklamasını, isteğe bağlı JSON-LD şemasını ve içeriğini verir.
+ * Kullanıcı bilgisi middleware'in hazırladığı `Astro.locals.user`'dan okunur.
+ */
+import '@/styles/global.css';
+import { SITE } from '@/config/site';
+import CookieConsent from '@/components/layout/CookieConsent';
+import SiteFooter from '@/components/layout/SiteFooter.astro';
+import SiteHeader from '@/components/layout/SiteHeader.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Paylaşım görseli (Open Graph / Twitter). */
+  image?: string | null;
+  /** Arama motorlarından gizlenecek sayfalar için (panel, şifre sıfırlama vb.). */
+  noindex?: boolean;
+  /** schema.org yapılandırılmış verisi (JobPosting, Event, Organization ...). */
+  schema?: Record<string, unknown> | null;
+  /** Açık gri arka plan (panel ve form sayfaları için). */
+  muted?: boolean;
+  /**
+   * `minimal`: site menüsü ve footer gösterilmez (giriş/kayıt gibi odaklı akışlar).
+   * Neden: Kullanıcı formu tamamlarken dikkatini dağıtacak link olmamalı.
+   */
+  chrome?: 'full' | 'minimal';
+}
+
+const {
+  title = SITE.defaultTitle,
+  description = SITE.defaultDescription,
+  image,
+  noindex = false,
+  schema = null,
+  muted = false,
+  chrome = 'full',
+} = Astro.props;
+
+const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
+const shareImage = image || SITE.logo;
+const user = Astro.locals.user;
+---
+
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="theme-color" content="#f04c11" />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={shareImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={shareImage} />
+
+    <link rel="icon" type="image/png" href={SITE.favicon} sizes="32x32" />
+    <link rel="apple-touch-icon" href={SITE.favicon} />
+
+    <!-- Görsel CDN'ine erken bağlantı: kapak/logo görselleri daha hızlı başlar -->
+    <link rel="preconnect" href="https://youthsidecdn.doracdn.com" crossorigin />
+    <!-- Inter: preconnect ile font gecikmesi azaltılır, display=swap ile metin hemen görünür -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    {schema && <script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />}
+  </head>
+
+  <body
+    class:list={[
+      'flex min-h-screen flex-col overflow-x-hidden font-sans text-gray-900 antialiased selection:bg-primary-100 selection:text-primary-900',
+      muted ? 'bg-gray-50' : 'bg-white',
+    ]}
+  >
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:font-semibold focus:shadow-lg"
+    >
+      İçeriğe geç
+    </a>
+
+    {chrome === 'full' && <SiteHeader user={user} />}
+
+    <main id="main-content" class="grow">
+      <slot />
+    </main>
+
+    {chrome === 'full' && <SiteFooter />}
+    <CookieConsent client:idle />
+  </body>
+</html>

@@ -1,0 +1,39 @@
+---
+/**
+ * [MODÜL: GÖRÜNTÜLENME SAYACI — UI GENİŞLETMESİ]
+ * Amaç: İlan/etkinlik detayında görüntülenme sayısını artırmak.
+ * Referans: api-docs-v2 → "SSR sırasında çağırmayın; bot ve önbellek sayımı şişirir. Detay sayfası
+ *           tarayıcıdan POST /jobs/view veya /events/view çağırmalıdır."
+ * Aynı oturumda aynı kayıt tekrar sayılmaz (sessionStorage); hata sessizce yutulur.
+ */
+interface Props {
+  kind: 'jobs' | 'events';
+  id: string;
+}
+
+const { kind, id } = Astro.props;
+---
+
+<span hidden data-view-tracker data-kind={kind} data-id={id}></span>
+
+<script>
+  import { PUBLIC_API_URL } from 'astro:env/client';
+
+  for (const element of document.querySelectorAll<HTMLElement>('[data-view-tracker]')) {
+    const { kind, id } = element.dataset;
+    if (!kind || !id) continue;
+    const key = `ys_view_${kind}_${id}`;
+    try {
+      if (sessionStorage.getItem(key)) continue;
+      sessionStorage.setItem(key, '1');
+    } catch {
+      // Depolama kapalıysa yine de bir kez saymayı dene.
+    }
+    fetch(`${PUBLIC_API_URL}/${kind}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }
+</script>

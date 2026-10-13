@@ -1,0 +1,36 @@
+---
+/**
+ * [MODÜL: SAYFA BAŞLIĞI — UI GENİŞLETMESİ]
+ * Amaç: Liste ve statik sayfaların üst bölümünü (konum, başlık, açıklama, aksiyon alanı) tek
+ *       tasarımla sunmak. `slot` alanına arama/filtre çubuğu yerleştirilir.
+ */
+import Breadcrumbs from './Breadcrumbs.astro';
+import type { Crumb } from './types';
+import Container from './Container.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  eyebrow?: string;
+  breadcrumbs?: Crumb[];
+}
+
+const { title, description, eyebrow, breadcrumbs = [] } = Astro.props;
+---
+
+<!--
+  Bölüm `overflow-hidden` DEĞİL: içindeki filtre panelleri bölümün altına taşabilmeli.
+  Yalnızca dekoratif ışık efekti kendi kırpılmış katmanında tutulur (yatay kaydırma oluşmaz).
+-->
+<section class="relative z-20 border-b border-gray-100 bg-linear-to-br from-primary-50/70 via-white to-blue-50/50">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+    <div class="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary-200/30 blur-3xl"></div>
+  </div>
+  <Container class="relative py-8 md:py-12">
+    {breadcrumbs.length > 0 && <div class="mb-4"><Breadcrumbs items={breadcrumbs} /></div>}
+    {eyebrow && <p class="mb-2 text-xs font-bold uppercase tracking-wider text-primary-600 sm:text-sm">{eyebrow}</p>}
+    <h1 class="text-3xl font-black tracking-tight text-gray-900 sm:text-4xl md:text-5xl">{title}</h1>
+    {description && <p class="mt-3 max-w-2xl text-base text-gray-600 md:text-lg">{description}</p>}
+    {Astro.slots.has('default') && <div class="mt-6 md:mt-8"><slot /></div>}
+  </Container>
+</section>

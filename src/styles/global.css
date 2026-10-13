@@ -1,0 +1,198 @@
+/**
+ * [MODÜL: GLOBAL STİL & TASARIM TOKEN'LARI]
+ * Amaç: Tailwind v4 kurulumu ve Youthside renk/tipografi/gölge token'larını tek kaynakta tutmak.
+ *
+ * Kaynaklar:
+ *   - youthside-ui-kit/theme.css  → primary paleti, font, shimmer
+ *   - youthside-2026-ui/css/variables.css → yüzey/metin renkleri, gölgeler
+ *
+ * DRY: Renk kodu bu dosya dışında hardcode edilmez; bileşenler `bg-primary-600`,
+ *      `shadow-card` gibi token sınıflarını kullanır.
+ */
+
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+/* Kit Modal'ının kullandığı animate-in / fade-in / zoom-in-95 sınıfları (Tailwind v4 uyumlu) */
+@import "tw-animate-css";
+@import "../shared/ui-kit/styles.css";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* ── Primary Palette (kit ile birebir) ── */
+  --color-primary-50: #fef2ee;
+  --color-primary-100: #fde5dd;
+  --color-primary-200: #fbcbbb;
+  --color-primary-300: #f9b199;
+  --color-primary-400: #f79777;
+  --color-primary-500: #f57d55;
+  --color-primary-600: #f36433;
+  --color-primary-700: #f04c11;
+  --color-primary-800: #c33a0a;
+  --color-primary-900: #922b08;
+
+  /* ── Yüzey & Metin ── */
+  --color-background-light: #fdfdfd;
+  --color-surface-light: #ffffff;
+  --color-text-light: #1f2937;
+  --color-text-muted-light: #6b7280;
+
+  /* ── Gölgeler ── */
+  --shadow-card: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -1px rgb(0 0 0 / 0.03);
+  --shadow-hover: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+  --shadow-soft: 0 10px 40px -10px rgb(0 0 0 / 0.05);
+  --shadow-glow: 0 0 20px rgb(240 76 17 / 0.3);
+  --shadow-lift: 0 1px 2px rgb(15 23 42 / 0.04), 0 12px 32px -8px rgb(15 23 42 / 0.14);
+
+  /* ── Hareket sistemi ──
+     Tek hız eğrisi ve üç süre: tüm geçişler aynı "his"te olur (DRY + tutarlılık).
+     ease-smooth: hızlı başlayıp yumuşak biten eğri; hover ve açılır pencereler için doğal hissettirir. */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-pop-in: pop-in 180ms var(--ease-smooth) both;
+  --animate-sheet-up: sheet-up 320ms var(--ease-smooth) both;
+  --animate-backdrop-in: backdrop-in 200ms ease-out both;
+  --animate-slide-up: slide-up 420ms var(--ease-smooth) both;
+
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+  }
+  @keyframes backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+/* ── Sayfalar arası geçiş (tarayıcının yerel View Transitions özelliği) ──
+   Neden: Site çok sayfalı (MPA); her linkte beyaz yanıp sönme yerine içerik yumuşakça değişir.
+   JS gerektirmez, desteklemeyen tarayıcıda normal geçiş olur (progressive enhancement).
+   Header ve footer aynı isimle işaretlendiği için geçişte yerinde sabit kalır. */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: 160ms ease-out both vt-fade-out;
+}
+::view-transition-new(root) {
+  animation: 280ms var(--ease-smooth) both vt-fade-in;
+}
+::view-transition-group(site-header),
+::view-transition-group(site-footer) {
+  animation: none;
+}
+
+@keyframes vt-fade-out {
+  to { opacity: 0; }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+/* ── Header: sayfa kaydırılınca beliren ince gölge (scroll-driven animation, JS yok) ── */
+@supports (animation-timeline: scroll()) {
+  .header-elevate {
+    animation: header-elevate linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 80px;
+  }
+  @keyframes header-elevate {
+    to {
+      box-shadow: 0 1px 0 rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.18);
+      background-color: rgb(255 255 255 / 0.92);
+    }
+  }
+}
+
+/* ── Etkileşimli kart: tüm liste kartlarının ortak hover davranışı ──
+   transition-all yerine yalnızca GPU dostu özellikler (transform, gölge, kenarlık) canlandırılır. */
+@utility card-interactive {
+  transition-property: transform, box-shadow, border-color;
+  transition-duration: 300ms;
+  transition-timing-function: var(--ease-smooth);
+  will-change: transform;
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--color-primary-100);
+  }
+  &:active {
+    transform: translateY(-1px);
+    transition-duration: 120ms;
+  }
+  &:focus-within {
+    border-color: var(--color-primary-300);
+  }
+}
+
+/* Kart içindeki kapak görselinin yavaş ve yumuşak yakınlaşması */
+@utility media-zoom {
+  transition: transform 700ms var(--ease-smooth);
+  :where(.card-interactive:hover) & {
+    transform: scale(1.04);
+  }
+}
+
+/* ── Temel davranışlar ── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Klavye kullanıcıları için görünür odak halkası (erişilebilirlik) */
+  :focus-visible {
+    outline: 2px solid var(--color-primary-600);
+    outline-offset: 2px;
+  }
+}
+
+/* ── Zengin metin (API'den gelen temizlenmiş HTML) ──
+   Neden: İlan açıklaması, şirket hakkında gibi alanlar editörden gelir; tek bir tipografi
+   sınıfıyla tutarlı görünür. Kullanım: <div class="prose-ys" set:html={...} /> */
+@utility prose-ys {
+  @apply prose prose-gray max-w-none break-words prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-primary-700 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-2xl prose-li:my-1 prose-p:leading-relaxed;
+}
+
+/* Yatay kaydırılan şeritlerde (sekme, filtre çipi) kaydırma çubuğunu gizle */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* iOS Safari, 16px'den küçük form alanına odaklanınca sayfayı yakınlaştırır. Mobilde form alanları
+   16px'e sabitlenir. Katmansız (unlayered) kural olduğu için utility sınıflarından önceliklidir. */
+@media (max-width: 639px) {
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Hareket hassasiyeti olan kullanıcılar için tüm dekoratif animasyonları durdur */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  @view-transition {
+    navigation: none;
+  }
+}

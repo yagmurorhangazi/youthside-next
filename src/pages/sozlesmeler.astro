@@ -1,0 +1,70 @@
+---
+/**
+ * [SAYFA: YASAL METİNLER]
+ * Referans: youthside-2026-ui/sozlesmeler/index.php
+ * Sekme seçimi `?tab=` ile sunucuda yapılır (JS gerekmez, her sekmenin paylaşılabilir linki olur).
+ * Metinler statiktir ve `features/legal/components` altında tutulur.
+ */
+import { ChevronRight, Mail } from 'lucide-react';
+import { ROUTES, SITE, type AgreementTab } from '@/config/site';
+import ConsentStatement from '@/features/legal/components/ConsentStatement.astro';
+import KvkkNotice from '@/features/legal/components/KvkkNotice.astro';
+import ServiceTerms from '@/features/legal/components/ServiceTerms.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getEnum } from '@/shared/lib/search-params';
+import Container from '@/shared/ui/Container.astro';
+import PageHeader from '@/shared/ui/PageHeader.astro';
+
+const TABS: { key: AgreementTab; label: string; title: string; component: typeof ServiceTerms }[] = [
+  { key: 'hizmet-sozlesmesi', label: 'Hizmet Sözleşmesi', title: 'İnternet Kullanıcı Sözleşmesi (Hizmet Koşulları)', component: ServiceTerms },
+  { key: 'kvkk', label: 'KVKK Aydınlatma Metni', title: 'KVKK Aydınlatma Metni', component: KvkkNotice },
+  { key: 'acik-riza', label: 'Açık Rıza & İletişim İzni', title: 'Açık Rıza ve Ticari İletişim İzin Beyanı', component: ConsentStatement },
+];
+
+const activeKey = getEnum(Astro.url.searchParams, 'tab', TABS.map((tab) => tab.key)) ?? 'hizmet-sozlesmesi';
+const active = TABS.find((tab) => tab.key === activeKey)!;
+const Content = active.component;
+---
+
+<BaseLayout title={`${active.label} — Yasal Metinler`} description="Youthside hizmet sözleşmesi, KVKK aydınlatma metni ve açık rıza beyanı." muted>
+  <PageHeader eyebrow="Şeffaflık" title="Yasal metinler" description="Haklarını ve sorumluluklarımızı açıkça paylaşıyoruz." breadcrumbs={[{ label: 'Yasal metinler' }]} />
+
+  <Container class="py-10 md:py-14">
+    <div class="grid gap-6 lg:grid-cols-[280px_1fr] lg:gap-10">
+      <nav aria-label="Yasal metinler" class="lg:sticky lg:top-24 lg:self-start">
+        <ul class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-col lg:px-0">
+          {
+            TABS.map((tab) => {
+              const isActive = tab.key === activeKey;
+              return (
+                <li class="shrink-0">
+                  <a
+                    href={ROUTES.agreements(tab.key)}
+                    aria-current={isActive ? 'page' : undefined}
+                    class:list={[
+                      'flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition lg:px-5 lg:py-4',
+                      isActive ? 'bg-white text-primary-700 shadow-sm ring-1 ring-gray-200' : 'text-gray-600 hover:bg-white hover:text-gray-900',
+                    ]}
+                  >
+                    {tab.label}
+                    <ChevronRight size={16} className={`hidden lg:block ${isActive ? 'opacity-100' : 'opacity-0'}`} aria-hidden="true" />
+                  </a>
+                </li>
+              );
+            })
+          }
+        </ul>
+        <p class="mt-6 hidden rounded-2xl bg-white p-5 text-sm text-gray-600 shadow-sm ring-1 ring-gray-100 lg:block">
+          Sorularını <a href={`mailto:${SITE.supportEmail}`} class="inline-flex items-center gap-1 font-semibold text-primary-700 hover:underline"><Mail size={14} aria-hidden="true" />{SITE.supportEmail}</a> adresine iletebilirsin.
+        </p>
+      </nav>
+
+      <article class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm sm:p-10">
+        <h2 class="mb-6 border-b border-gray-100 pb-5 text-2xl font-black tracking-tight text-gray-900">{active.title}</h2>
+        <div class="prose-ys">
+          <Content />
+        </div>
+      </article>
+    </div>
+  </Container>
+</BaseLayout>

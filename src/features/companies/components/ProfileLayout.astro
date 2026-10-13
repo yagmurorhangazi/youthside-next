@@ -1,0 +1,136 @@
+---
+/**
+ * [MODÜL: ŞİRKET / KULÜP PROFİL ŞABLONU]
+ * Amaç: Profilin tüm sekmelerinde ortak kapak, kimlik bilgileri ve sekme menüsünü çizmek.
+ * Referans: youthside-2026-ui/sirket-profili/{_profile-header,_sidebar}.php
+ *
+ * Sekmeler veriyle tanımlanır (OCP). Kulüplerde "İlanlar" sekmesi yoktur (kulüpler ilan açamaz);
+ * içerik olmayan Ödüller/Fotoğraflar sekmeleri gizlenir.
+ */
+import { BadgeCheck, Building2, ExternalLink, GraduationCap, Users } from 'lucide-react';
+import SocialIcon from '@/components/layout/SocialIcon.astro';
+import { ROUTES } from '@/config/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Breadcrumbs from '@/shared/ui/Breadcrumbs.astro';
+import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
+import Container from '@/shared/ui/Container.astro';
+import type { ProfileContext, ProfileTab } from '../lib/profile-loader';
+
+interface Props {
+  context: ProfileContext;
+  active: ProfileTab;
+  /** Sekmeye özel sayfa başlığı (ör. "İlanlar"). Genel bakışta verilmez. */
+  title?: string;
+  description?: string;
+}
+
+const { context, active, title, description } = Astro.props;
+const { profile, counts } = context;
+const isClub = profile.type === 'club';
+const directory = isClub ? { label: 'Kulüpler', href: ROUTES.clubs } : { label: 'Şirketler', href: ROUTES.companies };
+
+const tabs = [
+  { key: 'overview', label: 'Genel Bakış', href: ROUTES.company(profile.slug), visible: true },
+  { key: 'jobs', label: 'İlanlar', count: counts.jobs, href: ROUTES.companyJobs(profile.slug), visible: !isClub },
+  { key: 'events', label: 'Etkinlikler', count: counts.events, href: ROUTES.companyEvents(profile.slug), visible: true },
+  { key: 'awards', label: 'Ödüller', count: counts.awards, href: ROUTES.companyAwards(profile.slug), visible: counts.awards > 0 },
+  { key: 'photos', label: 'Fotoğraflar', count: counts.photos, href: ROUTES.companyPhotos(profile.slug), visible: counts.photos > 0 },
+].filter((tab) => tab.visible);
+
+const subtitle = isClub ? profile.university : profile.sector;
+const pageTitle = title ? `${profile.name} ${title}` : `${profile.name} — ${isClub ? 'Kulüp' : 'Kariyer'} Profili`;
+const pageDescription =
+  description ?? (profile.aboutText || `${profile.name} hakkında bilgi, açık ilanlar ve etkinlikler Youthside'da.`);
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: profile.name,
+  logo: profile.logoUrl ?? undefined,
+  url: profile.website ?? undefined,
+  sameAs: profile.socials.map((social) => social.url),
+  description: profile.aboutText || undefined,
+};
+---
+
+<BaseLayout title={pageTitle} description={pageDescription} image={profile.coverImageUrl ?? profile.logoUrl} schema={active === 'overview' ? organizationSchema : null} muted>
+  <!-- Kapak -->
+  <div class="relative h-40 bg-linear-to-br from-gray-800 via-gray-700 to-primary-800 sm:h-56 lg:h-72">
+    {profile.coverImageUrl && <img src={profile.coverImageUrl} alt="" fetchpriority="high" class="h-full w-full object-cover" />}
+    <div class="absolute inset-0 bg-linear-to-t from-black/50 via-black/10 to-transparent"></div>
+  </div>
+
+  <Container>
+    <!-- Kimlik kartı -->
+    <section class="relative -mt-12 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:-mt-16 sm:p-8">
+      <div class="flex flex-col gap-5 md:flex-row md:items-end">
+        <CompanyLogo name={profile.name} src={profile.logoUrl} size="xl" class="-mt-16 sm:-mt-20" />
+        <div class="min-w-0 flex-1">
+          <div class="mb-2"><Breadcrumbs items={[directory, { label: profile.name }]} /></div>
+          <h1 class="flex items-center gap-2 text-2xl font-black tracking-tight text-gray-900 sm:text-3xl md:text-4xl">
+            <span class="min-w-0 break-words">{profile.name}</span>
+            {profile.isVerified && <BadgeCheck size={26} className="shrink-0 text-blue-500" aria-label="Onaylı hesap" />}
+          </h1>
+          <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+            {subtitle && (
+              <span class="flex items-center gap-1.5">
+                {isClub ? <GraduationCap size={16} aria-hidden="true" /> : <Building2 size={16} aria-hidden="true" />}
+                {subtitle}
+              </span>
+            )}
+            {!isClub && profile.employeeRange && <span class="flex items-center gap-1.5"><Users size={16} aria-hidden="true" />{profile.employeeRange} çalışan</span>}
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          {profile.socials.map((social) => (
+            <a
+              href={social.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${profile.name} ${social.platform}`}
+              class="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition hover:border-primary-300 hover:text-primary-600"
+            >
+              <SocialIcon platform={social.platform} />
+            </a>
+          ))}
+          {profile.website && (
+            <a href={profile.website} target="_blank" rel="noopener noreferrer" class="flex h-11 items-center gap-2 rounded-xl bg-gray-900 px-4 text-sm font-bold text-white transition hover:bg-gray-700">
+              Web sitesi
+              <ExternalLink size={15} aria-hidden="true" />
+            </a>
+          )}
+        </div>
+      </div>
+
+      <!-- Sekmeler -->
+      <nav aria-label="Profil bölümleri" class="-mx-5 mt-6 border-t border-gray-100 px-5 sm:-mx-8 sm:px-8">
+        <ul class="scrollbar-none -mb-px flex gap-1 overflow-x-auto">
+          {tabs.map((tab) => {
+            const isActive = tab.key === active;
+            return (
+              <li class="shrink-0">
+                <a
+                  href={tab.href}
+                  aria-current={isActive ? 'page' : undefined}
+                  class:list={[
+                    'flex h-14 items-center gap-2 border-b-2 px-3 text-sm font-bold transition',
+                    isActive ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-900',
+                  ]}
+                >
+                  {tab.label}
+                  {'count' in tab && typeof tab.count === 'number' && tab.count > 0 && (
+                    <span class:list={['rounded-full px-2 py-0.5 text-[11px]', isActive ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-500']}>{tab.count}</span>
+                  )}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </section>
+
+    <div class="py-8 md:py-10">
+      <slot />
+    </div>
+  </Container>
+</BaseLayout>

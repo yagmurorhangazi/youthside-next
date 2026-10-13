@@ -1,0 +1,89 @@
+---
+/**
+ * [MODÜL: ŞİRKET / KULÜP DİZİNİ]
+ * Amaç: /sirketler ve /kulupler sayfalarının ortak şablonu. Tek fark `type` ve metinlerdir;
+ *       iki sayfa aynı bileşeni farklı veriyle kullanır (DRY).
+ * Veri: GET companies/list?type=company|club
+ */
+import { Building2, Users } from 'lucide-react';
+import FilterBar from '@/components/filters/FilterBar';
+import { ROUTES } from '@/config/site';
+import { createSafeLoader } from '@/core/safe';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CardGrid from '@/shared/ui/CardGrid.astro';
+import Container from '@/shared/ui/Container.astro';
+import ErrorNotice from '@/shared/ui/ErrorNotice.astro';
+import PageHeader from '@/shared/ui/PageHeader.astro';
+import PaginationNav from '@/shared/ui/PaginationNav.astro';
+import { companySorts, parseCompanyFilters } from '../lib/company-filters';
+import type { OrganizationType } from '../types';
+import CompanyCard from './CompanyCard.astro';
+
+interface Props {
+  type: OrganizationType;
+}
+
+const { type } = Astro.props;
+const isClub = type === 'club';
+
+const COPY = {
+  company: {
+    title: 'Şirketler',
+    seoTitle: 'Genç Yeteneklere Kapısını Açan Şirketler',
+    eyebrow: 'İşveren markaları',
+    description: 'Kültürlerini, açık ilanlarını ve etkinliklerini keşfet; sana en uygun işvereni bul.',
+    search: 'Şirket adı veya sektör ara',
+    noun: 'şirket',
+    path: ROUTES.companies,
+    empty: 'Aramana uygun şirket bulunamadı',
+  },
+  club: {
+    title: 'Kulüpler',
+    seoTitle: 'Üniversite Kulüpleri ve Toplulukları',
+    eyebrow: 'Kampüs toplulukları',
+    description: 'Üniversite kulüplerini keşfet, etkinliklerine katıl ve ağını genişlet.',
+    search: 'Kulüp veya üniversite ara',
+    noun: 'kulüp',
+    path: ROUTES.clubs,
+    empty: 'Aramana uygun kulüp bulunamadı',
+  },
+}[type];
+
+const { filters, sortKey } = parseCompanyFilters(Astro.url.searchParams, type);
+const result = await createSafeLoader(`DIZIN:${type}`)(Astro.locals.services.companies.list(filters), 'Liste');
+---
+
+<BaseLayout title={COPY.seoTitle} description={COPY.description}>
+  <PageHeader eyebrow={COPY.eyebrow} title={COPY.title} description={COPY.description} breadcrumbs={[{ label: COPY.title }]}>
+    <FilterBar
+      client:load
+      basePath={COPY.path}
+      searchPlaceholder={COPY.search}
+      groups={[]}
+      sorts={companySorts(type)}
+      initial={{ q: filters.q, values: {}, sort: sortKey }}
+      total={result?.total ?? 0}
+      resultNoun={COPY.noun}
+    />
+  </PageHeader>
+
+  <Container class="py-10 md:py-14">
+    {
+      result === null ? (
+        <ErrorNotice />
+      ) : (
+        <>
+          <CardGrid
+            isEmpty={result.items.length === 0}
+            emptyIcon={isClub ? Users : Building2}
+            emptyTitle={filters.q ? COPY.empty : `Henüz listelenen ${COPY.noun} yok`}
+            emptyAction={filters.q ? { label: 'Aramayı temizle', href: COPY.path } : undefined}
+          >
+            {result.items.map((company) => <CompanyCard company={company} />)}
+          </CardGrid>
+          <PaginationNav page={result.page} totalPages={result.totalPages} url={Astro.url} />
+        </>
+      )
+    }
+  </Container>
+</BaseLayout>

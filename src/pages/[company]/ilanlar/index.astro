@@ -1,0 +1,49 @@
+---
+/**
+ * [SAYFA: PROFİL — İLANLAR SEKMESİ]
+ * URL: /{slug}/ilanlar · Referans: youthside-2026-ui/sirket-profili/ilanlar/index.php
+ * Veri: jobs/list?company_slug= (sayfalı). Kulüpler ilan açamadığı için kulüp profiline dönülür.
+ */
+import { Inbox } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import { createSafeLoader } from '@/core/safe';
+import ProfileLayout from '@/features/companies/components/ProfileLayout.astro';
+import { loadProfileContext } from '@/features/companies/lib/profile-loader';
+import JobCard from '@/features/jobs/components/JobCard.astro';
+import { getPage } from '@/shared/lib/search-params';
+import CardGrid from '@/shared/ui/CardGrid.astro';
+import ErrorNotice from '@/shared/ui/ErrorNotice.astro';
+import PaginationNav from '@/shared/ui/PaginationNav.astro';
+
+const slug = Astro.params.company ?? '';
+const services = Astro.locals.services;
+const context = await loadProfileContext(services, slug);
+if (!context) return Astro.rewrite('/404');
+if (context.profile.type === 'club') return Astro.redirect(ROUTES.company(slug), 302);
+
+const result = await createSafeLoader(`PROFIL:${slug}`)(
+  services.jobs.list({ companySlug: slug, page: getPage(Astro.url.searchParams), limit: 9 }),
+  'İlanlar',
+);
+---
+
+<ProfileLayout context={context} active="jobs" title="İş ve Staj İlanları" description={`${context.profile.name} şirketindeki güncel staj ve iş ilanları.`}>
+  {
+    result === null ? (
+      <ErrorNotice />
+    ) : (
+      <>
+        <CardGrid
+          isEmpty={result.items.length === 0}
+          emptyIcon={Inbox}
+          emptyTitle="Şu an açık ilan bulunmuyor"
+          emptyDescription="Yeni ilanlar yayınlandığında burada görünecek."
+          emptyAction={{ label: 'Tüm ilanlara göz at', href: ROUTES.jobs }}
+        >
+          {result.items.map((job) => <JobCard job={job} hideCompany />)}
+        </CardGrid>
+        <PaginationNav page={result.page} totalPages={result.totalPages} url={Astro.url} />
+      </>
+    )
+  }
+</ProfileLayout>

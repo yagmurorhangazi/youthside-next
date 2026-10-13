@@ -1,0 +1,201 @@
+---
+/**
+ * [SAYFA: İLAN DETAYI]
+ * Amaç: İlanın tüm bilgilerini göstermek ve adayı başvuruya yönlendirmek.
+ * URL: /{şirket-slug}/ilanlar/{ilan-slug}
+ * Referans: youthside-2026-ui/sirket-profili/ilanlar/detail.php
+ * Veri: jobs/get?slug= · (aday) applications/check + candidates/profile-completeness · jobs/list (diğer ilanlar)
+ *
+ * Kurallar (api-docs-v2 → Vitrin notları):
+ *   - İlan slug'ı global benzersiz; URL'deki şirket slug'ı eşleşmezse doğru adrese 301 yönlendirilir.
+ *   - Görüntülenme sayacı tarayıcıdan çağrılır (ViewTracker).
+ */
+import { Briefcase, Building2, CalendarClock, CalendarPlus, House, Layers, MapPin, Users } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import { createSafeLoader } from '@/core/safe';
+import ApplyPanel from '@/features/jobs/components/ApplyPanel';
+import JobCard from '@/features/jobs/components/JobCard.astro';
+import { resolveApplyState } from '@/features/jobs/lib/apply-state';
+import { getDeadlineInfo } from '@/features/jobs/lib/deadline';
+import { buildJobPostingSchema } from '@/features/jobs/lib/job-schema';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatLongDate, formatRelative, parseDate } from '@/shared/lib/date';
+import Breadcrumbs from '@/shared/ui/Breadcrumbs.astro';
+import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
+import Container from '@/shared/ui/Container.astro';
+import ViewTracker from '@/shared/ui/ViewTracker.astro';
+
+const { company: companySlug = '', job: jobSlug = '' } = Astro.params;
+const { jobs, candidate } = Astro.locals.services;
+const user = Astro.locals.user;
+
+const job = await jobs.getBySlug(jobSlug);
+if (!job) return Astro.rewrite('/404');
+
+const canonicalPath = ROUTES.jobDetail(job.company.slug, job.slug);
+if (job.company.slug && job.company.slug !== companySlug) return Astro.redirect(canonicalPath, 301);
+
+const safe = createSafeLoader('ILAN_DETAY');
+const [hasApplied, completeness, companyJobs] = await Promise.all([
+  user ? safe(candidate.hasApplied(job.id), 'Başvuru kontrolü') : Promise.resolve(false),
+  user ? safe(candidate.getCompleteness(), 'Profil doluluğu') : Promise.resolve(null),
+  safe(jobs.list({ companySlug: job.company.slug, limit: 4 }), 'Şirketin diğer ilanları'),
+]);
+
+const deadline = getDeadlineInfo(job.expirationDate);
+const applyState = resolveApplyState({
+  expirationDate: job.expirationDate,
+  externalApplicationUrl: job.externalApplicationUrl,
+  isLoggedIn: Boolean(user),
+  hasApplied: Boolean(hasApplied),
+  isProfileEligible: completeness ? completeness.isEligible : null,
+});
+
+const otherJobs = (companyJobs?.items ?? []).filter((item) => item.id !== job.id).slice(0, 3);
+const published = parseDate(job.publishDate);
+const expiry = parseDate(job.expirationDate);
+
+const facts = [
+  { icon: Briefcase, label: 'Çalışma tipi', value: job.type },
+  { icon: House, label: 'Çalışma modeli', value: job.workModel },
+  { icon: MapPin, label: 'Lokasyon', value: job.locations.join(', ') || null },
+  { icon: Layers, label: 'Kategori', value: job.category },
+  { icon: CalendarPlus, label: 'Yayın tarihi', value: published ? `${formatLongDate(published)} (${formatRelative(published)})` : null },
+  { icon: CalendarClock, label: 'Son başvuru', value: expiry ? formatLongDate(expiry) : 'Belirtilmemiş' },
+].filter((fact) => fact.value);
+---
+
+<BaseLayout
+  title={`${job.title} — ${job.company.name}`}
+  description={job.excerpt || `${job.company.name} şirketinde ${job.title} pozisyonu için başvur.`}
+  image={job.coverImageUrl ?? job.company.logoUrl}
+  schema={buildJobPostingSchema(job)}
+  muted
+>
+  <Container class="pb-28 pt-6 md:pt-8 lg:pb-16">
+    <Breadcrumbs items={[{ label: 'İlanlar', href: ROUTES.jobs }, { label: job.company.name, href: ROUTES.company(job.company.slug) }, { label: job.title }]} />
+
+    <!-- Başlık kartı -->
+    <header class="mt-5 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+      {
+        job.coverImageUrl && (
+          <div class="aspect-[3/1] max-h-72 w-full bg-gray-100 sm:aspect-[4/1]">
+            <img src={job.coverImageUrl} alt="" fetchpriority="high" class="h-full w-full object-cover" />
+          </div>
+        )
+      }
+      <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-8">
+        <a href={ROUTES.company(job.company.slug)} class:list={['shrink-0', job.coverImageUrl && 'sm:-mt-16']} aria-label={`${job.company.name} profili`}>
+          <CompanyLogo name={job.company.name} src={job.company.logoUrl} size="lg" />
+        </a>
+        <div class="min-w-0 flex-1">
+          <h1 class="text-2xl font-black leading-tight tracking-tight text-gray-900 sm:text-3xl">{job.title}</h1>
+          <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
+            <a href={ROUTES.company(job.company.slug)} class="flex items-center gap-1 font-bold text-gray-800 hover:text-primary-600">
+              <Building2 size={16} aria-hidden="true" />
+              {job.company.name}
+            </a>
+            {job.locations.length > 0 && <span class="flex items-center gap-1"><MapPin size={16} aria-hidden="true" />{job.locations.join(', ')}</span>}
+            {published && <span class="text-gray-400">· {formatRelative(published)} yayınlandı</span>}
+          </p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            {job.type && <span class="rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{job.type}</span>}
+            {job.workModel && <span class="rounded-lg bg-teal-50 px-3 py-1 text-xs font-bold text-teal-700">{job.workModel}</span>}
+            {job.category && <span class="rounded-lg bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">{job.category}</span>}
+            <span
+              class:list={[
+                'rounded-lg px-3 py-1 text-xs font-bold',
+                deadline.tone === 'urgent' ? 'bg-orange-50 text-orange-700' : deadline.tone === 'expired' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-600',
+              ]}
+            >
+              {deadline.tone === 'expired' ? 'Süresi doldu' : `Son başvuru: ${deadline.label}`}
+            </span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-3 lg:gap-8">
+      <!-- Açıklama -->
+      <article class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8 lg:col-span-2">
+        <h2 class="mb-5 text-xl font-bold text-gray-900">İlan açıklaması</h2>
+        {
+          job.descriptionHtml ? (
+            <div class="prose-ys" set:html={job.descriptionHtml} />
+          ) : (
+            <p class="text-gray-500">Bu ilan için açıklama eklenmemiş.</p>
+          )
+        }
+      </article>
+
+      <!-- Kenar çubuğu -->
+      <aside class="space-y-6 lg:sticky lg:top-24 lg:self-start">
+        <ApplyPanel
+          client:load
+          jobId={job.id}
+          jobTitle={job.title}
+          companyName={job.company.name}
+          jobPath={canonicalPath}
+          initialState={applyState}
+          deadlineLabel={deadline.label}
+          externalUrl={job.externalApplicationUrl}
+          questions={job.questions}
+          contracts={job.contracts}
+          completeness={completeness ? { percentage: completeness.percentage, threshold: completeness.threshold, missing: completeness.missingFields.map((field) => field.label) } : null}
+        />
+
+        <section class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm" aria-labelledby="facts-title">
+          <h2 id="facts-title" class="mb-4 font-bold text-gray-900">İlan özeti</h2>
+          <dl class="space-y-4">
+            {
+              facts.map(({ icon: Icon, label, value }) => (
+                <div class="flex gap-3">
+                  <dt class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-gray-500">
+                    <Icon size={17} aria-hidden="true" />
+                    <span class="sr-only">{label}</span>
+                  </dt>
+                  <dd class="min-w-0 text-sm">
+                    <span class="block text-xs font-medium text-gray-400" aria-hidden="true">{label}</span>
+                    <span class="font-semibold text-gray-800">{value}</span>
+                  </dd>
+                </div>
+              ))
+            }
+          </dl>
+        </section>
+
+        <section class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm" aria-label="Şirket">
+          <div class="flex items-center gap-3">
+            <CompanyLogo name={job.company.name} src={job.company.logoUrl} size="sm" />
+            <div class="min-w-0">
+              <p class="truncate font-bold text-gray-900">{job.company.name}</p>
+              <p class="flex flex-wrap gap-x-2 text-xs text-gray-500">
+                {job.companySector && <span>{job.companySector}</span>}
+                {job.company.employeeRange && <span class="flex items-center gap-1"><Users size={12} aria-hidden="true" />{job.company.employeeRange}</span>}
+              </p>
+            </div>
+          </div>
+          <a href={ROUTES.company(job.company.slug)} class="mt-4 block rounded-xl border border-gray-200 py-2.5 text-center text-sm font-bold text-gray-700 transition hover:border-primary-300 hover:text-primary-700">
+            Şirket profilini incele
+          </a>
+        </section>
+      </aside>
+    </div>
+
+    {
+      otherJobs.length > 0 && (
+        <section class="mt-14" aria-labelledby="more-jobs">
+          <div class="mb-6 flex items-end justify-between gap-4">
+            <h2 id="more-jobs" class="text-2xl font-extrabold text-gray-900">{job.company.name} şirketinin diğer ilanları</h2>
+            <a href={ROUTES.companyJobs(job.company.slug)} class="hidden shrink-0 text-sm font-bold text-primary-600 hover:underline sm:block">Tümünü gör</a>
+          </div>
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {otherJobs.map((item) => <JobCard job={item} hideCompany />)}
+          </div>
+        </section>
+      )
+    }
+  </Container>
+
+  <ViewTracker kind="jobs" id={job.id} />
+</BaseLayout>

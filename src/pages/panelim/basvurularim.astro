@@ -1,0 +1,63 @@
+---
+/**
+ * [SAYFA: PANELİM — BAŞVURULARIM]
+ * Veri: applications/my-list?status_filter=active|past (sayfalı)
+ * ?durum=gecmis → kapanmış ilanlar ve tamamlanmış süreçler.
+ */
+import { FileText } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import { createSafeLoader } from '@/core/safe';
+import PanelLayout from '@/features/candidate/components/PanelLayout.astro';
+import ParticipationRow from '@/features/candidate/components/ParticipationRow.astro';
+import { applicationRow } from '@/features/candidate/lib/participation-display';
+import { getPage } from '@/shared/lib/search-params';
+import CardGrid from '@/shared/ui/CardGrid.astro';
+import ErrorNotice from '@/shared/ui/ErrorNotice.astro';
+import PaginationNav from '@/shared/ui/PaginationNav.astro';
+
+const isPast = Astro.url.searchParams.get('durum') === 'gecmis';
+const result = await createSafeLoader('BASVURULARIM')(
+  Astro.locals.services.candidate.myApplications(isPast ? 'past' : 'active', getPage(Astro.url.searchParams)),
+  'Başvurular',
+);
+
+const tabs = [
+  { label: 'Aktif', href: ROUTES.myApplications, active: !isPast },
+  { label: 'Geçmiş', href: `${ROUTES.myApplications}?durum=gecmis`, active: isPast },
+];
+---
+
+<PanelLayout title="Başvurularım" description="Yaptığın tüm ilan başvurularını buradan takip edebilirsin.">
+  <nav aria-label="Başvuru durumu" class="mb-5 inline-flex rounded-2xl border border-gray-200 bg-white p-1">
+    {
+      tabs.map((tab) => (
+        <a
+          href={tab.href}
+          aria-current={tab.active ? 'page' : undefined}
+          class:list={['rounded-xl px-5 py-2 text-sm font-bold transition', tab.active ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900']}
+        >
+          {tab.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  {
+    result === null ? (
+      <ErrorNotice />
+    ) : result.items.length === 0 ? (
+      <CardGrid
+        isEmpty
+        emptyIcon={FileText}
+        emptyTitle={isPast ? 'Geçmiş başvurun bulunmuyor' : 'Henüz aktif başvurun yok'}
+        emptyDescription="Sana uygun ilanları keşfet ve profilinle tek tıkla başvur."
+        emptyAction={{ label: 'İlanları keşfet', href: ROUTES.jobs }}
+      />
+    ) : (
+      <>
+        <ul class="space-y-3">{result.items.map((item) => <ParticipationRow {...applicationRow(item)} />)}</ul>
+        <PaginationNav page={result.page} totalPages={result.totalPages} url={Astro.url} />
+      </>
+    )
+  }
+</PanelLayout>

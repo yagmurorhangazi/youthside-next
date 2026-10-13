@@ -1,0 +1,36 @@
+---
+/**
+ * [MODÜL: ANA SAYFA — SON EKLENEN ETKİNLİKLER]
+ * Amaç: En yeni etkinlikleri kart ızgarasında göstermek. Veri sayfadan prop olarak gelir.
+ */
+import { CalendarX, Rocket } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import EventCard from '@/features/events/components/EventCard.astro';
+import type { EventSummary } from '@/features/events/types';
+import CardGrid from '@/shared/ui/CardGrid.astro';
+import SectionHeading from '@/shared/ui/SectionHeading.astro';
+
+interface Props {
+  events: EventSummary[];
+}
+
+const { events } = Astro.props;
+---
+
+<section class="relative overflow-hidden bg-gray-50 py-16 md:py-24">
+  <!-- Dekoratif silik ikon -->
+  <div class="pointer-events-none absolute -right-24 top-16 hidden text-gray-200/70 lg:block" aria-hidden="true">
+    <Rocket size={420} strokeWidth={1} />
+  </div>
+
+  <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <SectionHeading
+      title="Son Eklenen Etkinlikler"
+      description="Kariyerine değer katacak bootcampler, zirveler ve online eğitimleri kaçırma."
+      link={{ label: 'Tüm Etkinlikleri Gör', href: ROUTES.events }}
+    />
+    <CardGrid isEmpty={events.length === 0} emptyIcon={CalendarX} emptyTitle="Şu an için yayında olan etkinlik bulunmamaktadır.">
+      {events.map((event) => <EventCard event={event} />)}
+    </CardGrid>
+  </div>
+</section>

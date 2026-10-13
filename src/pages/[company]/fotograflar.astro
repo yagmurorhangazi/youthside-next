@@ -1,0 +1,26 @@
+---
+/**
+ * [SAYFA: PROFİL — FOTOĞRAFLAR SEKMESİ]
+ * URL: /{slug}/fotograflar · Referans: youthside-2026-ui/sirket-profili/fotograflar/index.php
+ * Veri: companies/get_gallery_items (profil yükleyicisinden gelir).
+ */
+import { Images } from 'lucide-react';
+import GalleryGrid from '@/features/companies/components/GalleryGrid';
+import ProfileLayout from '@/features/companies/components/ProfileLayout.astro';
+import { loadProfileContext } from '@/features/companies/lib/profile-loader';
+import CardGrid from '@/shared/ui/CardGrid.astro';
+
+const slug = Astro.params.company ?? '';
+const context = await loadProfileContext(Astro.locals.services, slug);
+if (!context) return Astro.rewrite('/404');
+---
+
+<ProfileLayout context={context} active="photos" title="Fotoğrafları" description={`${context.profile.name} ofisinden ve etkinliklerinden kareler.`}>
+  {
+    context.gallery.length === 0 ? (
+      <CardGrid isEmpty emptyIcon={Images} emptyTitle="Henüz fotoğraf eklenmemiş" />
+    ) : (
+      <GalleryGrid client:visible images={context.gallery} companyName={context.profile.name} />
+    )
+  }
+</ProfileLayout>

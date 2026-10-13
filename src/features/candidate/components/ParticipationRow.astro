@@ -1,0 +1,48 @@
+---
+/**
+ * [MODÜL: BAŞVURU / KAYIT SATIRI]
+ * Amaç: "Başvurularım" ve "Etkinliklerim" listelerinde tek bir kaydı yatay satır olarak göstermek.
+ * Aynı görsel dili iki listede de kullanmak için ortak bileşen (DRY); içerik veriyle gelir.
+ */
+import { ChevronRight } from 'lucide-react';
+import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
+
+export interface Props {
+  href: string;
+  title: string;
+  companyName: string;
+  companyLogo: string | null;
+  /** Küçük gri bilgi satırı (ör. "Staj · Hibrit"). */
+  meta?: string | null;
+  /** Sağdaki tarih metni (ör. "3 gün önce başvurdun"). */
+  dateText?: string | null;
+  badge?: { label: string; tone: 'green' | 'gray' | 'orange' | 'blue' | 'red' };
+}
+
+const { href, title, companyName, companyLogo, meta, dateText, badge } = Astro.props;
+
+const TONES = {
+  green: 'bg-emerald-50 text-emerald-700',
+  gray: 'bg-gray-100 text-gray-600',
+  orange: 'bg-orange-50 text-orange-700',
+  blue: 'bg-blue-50 text-blue-700',
+  red: 'bg-red-50 text-red-600',
+} as const;
+---
+
+<li>
+  <a href={href} class="group flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-primary-200 hover:shadow-md sm:p-5">
+    <CompanyLogo name={companyName} src={companyLogo} size="sm" class="sm:h-14 sm:w-14" />
+    <div class="min-w-0 flex-1">
+      <p class="truncate font-bold text-gray-900 group-hover:text-primary-700">{title}</p>
+      <p class="truncate text-sm text-gray-500">{[companyName, meta].filter(Boolean).join(' · ')}</p>
+      {dateText && <p class="mt-1 text-xs text-gray-400 sm:hidden">{dateText}</p>}
+    </div>
+    <div class="hidden shrink-0 flex-col items-end gap-1.5 sm:flex">
+      {badge && <span class:list={['rounded-full px-2.5 py-1 text-xs font-bold', TONES[badge.tone]]}>{badge.label}</span>}
+      {dateText && <span class="text-xs text-gray-400">{dateText}</span>}
+    </div>
+    {badge && <span class:list={['shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold sm:hidden', TONES[badge.tone]]}>{badge.label}</span>}
+    <ChevronRight size={18} className="shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-primary-500" aria-hidden="true" />
+  </a>
+</li>

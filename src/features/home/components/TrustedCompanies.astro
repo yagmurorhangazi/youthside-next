@@ -1,0 +1,71 @@
+---
+/**
+ * [MODÜL: ANA SAYFA — PLATFORMDAKİ ŞİRKETLER ŞERİDİ]
+ * Amaç: Platformdaki onaylı şirketlerin logolarıyla sosyal kanıt sunmak; her logo şirket profiline gider.
+ * Veri: GET companies/list?type=company (sayfadan prop). Logo sayısı azsa şerit kaydırılmaz, ortalanır.
+ * Teknik: Liste iki kez basılıp -50% kaydırılır → kesintisiz döngü (JS yok). İkinci kopya
+ *         ekran okuyuculardan ve klavye odağından gizlenir.
+ */
+import { ROUTES } from '@/config/site';
+import type { CompanySummary } from '@/features/companies/types';
+
+interface Props {
+  companies: CompanySummary[];
+}
+
+const withLogo = Astro.props.companies.filter((company) => company.logoUrl);
+const animate = withLogo.length >= 6;
+const copies = animate ? [false, true] : [false];
+---
+
+{
+  withLogo.length > 0 && (
+    <section class="overflow-hidden border-y border-gray-100 bg-white py-10 md:py-12" aria-labelledby="trusted-title">
+      <p id="trusted-title" class="mb-6 px-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-400 sm:text-sm">
+        Türkiye'nin öncü şirketleri Youthside'da
+      </p>
+      <div class:list={[animate && 'marquee']}>
+        <div class:list={[animate ? 'marquee-track' : 'flex flex-wrap justify-center px-4']}>
+          {copies.map((isClone) => (
+            <ul class="flex shrink-0 items-center gap-4 pr-4 md:gap-6 md:pr-6" aria-hidden={isClone ? 'true' : undefined}>
+              {withLogo.map((company) => (
+                <li class="shrink-0">
+                  {/* Sabit boyutlu kutu: kare ve yatay logolar aynı görsel ağırlıkta görünür. Logolar orijinal renklerinde. */}
+                  <a
+                    href={ROUTES.company(company.slug)}
+                    tabindex={isClone ? -1 : undefined}
+                    title={company.name}
+                    class="flex h-16 w-36 items-center justify-center rounded-2xl border border-gray-100 bg-white px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md md:h-20 md:w-44"
+                  >
+                    <img src={company.logoUrl} alt={isClone ? '' : company.name} loading="lazy" decoding="async" class="max-h-full max-w-full object-contain" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .marquee {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 40s linear infinite;
+  }
+  .marquee:hover .marquee-track,
+  .marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+</style>

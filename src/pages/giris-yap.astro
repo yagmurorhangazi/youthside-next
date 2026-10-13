@@ -1,0 +1,21 @@
+---
+/**
+ * [SAYFA: GİRİŞ YAP]
+ * Referans: youthside-2026-ui/giris-yap/index.php
+ * Sorgu parametreleri: ?redirect=/geri/donulecek/yol · ?email=on-dolu@eposta · ?sifirlandi=1
+ * Giriş yapmış kullanıcı doğrudan panele (veya redirect adresine) gönderilir.
+ */
+import { safeRedirect } from '@/config/site';
+import AuthLayout from '@/features/auth/components/AuthLayout.astro';
+import LoginForm from '@/features/auth/components/LoginForm';
+
+const params = Astro.url.searchParams;
+const redirect = safeRedirect(params.get('redirect'));
+if (Astro.locals.user) return Astro.redirect(redirect, 302);
+
+const notice = params.get('sifirlandi') === '1' ? 'Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.' : undefined;
+---
+
+<AuthLayout title="Giriş Yap" heading="Tekrar hoş geldin" subheading="Başvurularını ve etkinliklerini takip etmek için giriş yap.">
+  <LoginForm client:load redirect={redirect} initialEmail={params.get('email')?.slice(0, 255) ?? ''} notice={notice} />
+</AuthLayout>

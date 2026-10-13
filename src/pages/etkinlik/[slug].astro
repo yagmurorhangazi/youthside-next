@@ -1,0 +1,12 @@
+---
+/**
+ * [SAYFA: ETKİNLİK KALICI LİNKİ]
+ * URL: /etkinlik/{etkinlik-slug} → /{organizatör-slug}/etkinlikler/{etkinlik-slug} (301)
+ * Neden: registrations/my-events organizatör slug'ı döndürmüyor; etkinlik slug'ı global benzersiz.
+ */
+import { ROUTES } from '@/config/site';
+
+const event = await Astro.locals.services.events.getBySlug(Astro.params.slug ?? '');
+if (!event) return Astro.rewrite('/404');
+return Astro.redirect(ROUTES.eventDetail(event.company.slug, event.slug), 301);
+---

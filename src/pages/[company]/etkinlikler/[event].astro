@@ -1,0 +1,237 @@
+---
+/**
+ * [SAYFA: ETKİNLİK DETAYI]
+ * Amaç: Etkinliğin tarih, konum, program ve konuşmacı bilgilerini göstermek ve kayda yönlendirmek.
+ * URL: /{şirket-slug}/etkinlikler/{etkinlik-slug}
+ * Referans: youthside-2026-ui/sirket-profili/etkinlikler/detail.php
+ * Veri: events/get?slug= · (aday) registrations/check · events/list (organizatörün diğer etkinlikleri)
+ */
+import { Building2, CalendarDays, Clock, Globe, MapPin, Mic2, Tent, UsersRound } from 'lucide-react';
+import SocialIcon from '@/components/layout/SocialIcon.astro';
+import { ROUTES } from '@/config/site';
+import { createSafeLoader } from '@/core/safe';
+import EventCard from '@/features/events/components/EventCard.astro';
+import RegisterPanel from '@/features/events/components/RegisterPanel';
+import { PHASE_LABEL, formatSessionTime, getEventDateInfo, getEventLocationLabel } from '@/features/events/lib/event-display';
+import { buildEventSchema } from '@/features/events/lib/event-schema';
+import { resolveRegistrationState } from '@/features/events/lib/registration-state';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getInitials } from '@/shared/lib/text';
+import Breadcrumbs from '@/shared/ui/Breadcrumbs.astro';
+import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
+import Container from '@/shared/ui/Container.astro';
+import ViewTracker from '@/shared/ui/ViewTracker.astro';
+
+const { company: companySlug = '', event: eventSlug = '' } = Astro.params;
+const { events, candidate } = Astro.locals.services;
+const user = Astro.locals.user;
+
+const event = await events.getBySlug(eventSlug);
+if (!event) return Astro.rewrite('/404');
+
+const canonicalPath = ROUTES.eventDetail(event.company.slug, event.slug);
+if (event.company.slug && event.company.slug !== companySlug) return Astro.redirect(canonicalPath, 301);
+
+const safe = createSafeLoader('ETKINLIK_DETAY');
+const [isRegistered, organizerEvents] = await Promise.all([
+  user ? safe(candidate.isRegistered(event.id), 'Kayıt kontrolü') : Promise.resolve(false),
+  event.company.id ? safe(events.list({ companyId: event.company.id, activeOnly: true, limit: 4 }), 'Organizatörün etkinlikleri') : Promise.resolve(null),
+]);
+
+const date = getEventDateInfo(event);
+const registrationState = resolveRegistrationState({
+  endDate: event.endDate,
+  externalApplicationUrl: event.externalApplicationUrl,
+  remainingQuota: event.remainingQuota,
+  isLoggedIn: Boolean(user),
+  isRegistered: Boolean(isRegistered),
+});
+const otherEvents = (organizerEvents?.items ?? []).filter((item) => item.id !== event.id).slice(0, 3);
+const isOnline = event.locationType === 'Online';
+
+const facts = [
+  { icon: CalendarDays, label: 'Tarih', value: date.longLabel },
+  { icon: isOnline ? Globe : Tent, label: 'Katılım şekli', value: event.locationType },
+  { icon: MapPin, label: 'Konum', value: isOnline ? 'Online — bağlantı kayıt sonrası paylaşılır' : getEventLocationLabel(event) },
+  { icon: UsersRound, label: 'Kontenjan', value: event.quota ? `${event.quota} kişi` : null },
+].filter((fact) => fact.value);
+---
+
+<BaseLayout
+  title={`${event.title} — ${event.company.name}`}
+  description={event.excerpt || `${event.company.name} tarafından düzenlenen ${event.title} etkinliğine kaydol.`}
+  image={event.imageUrl ?? event.company.logoUrl}
+  schema={buildEventSchema(event)}
+  muted
+>
+  <Container class="pb-28 pt-6 md:pt-8 lg:pb-16">
+    <Breadcrumbs items={[{ label: 'Etkinlikler', href: ROUTES.events }, { label: event.company.name, href: ROUTES.company(event.company.slug) }, { label: event.title }]} />
+
+    <!-- Başlık -->
+    <header class="mt-5 grid overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm lg:grid-cols-5">
+      <div class="relative aspect-video bg-linear-to-br from-purple-100 via-blue-50 to-primary-100 lg:col-span-3 lg:aspect-auto lg:min-h-80">
+        {event.imageUrl && <img src={event.imageUrl} alt="" fetchpriority="high" class="absolute inset-0 h-full w-full object-cover" />}
+      </div>
+      <div class="flex flex-col justify-center p-5 sm:p-8 lg:col-span-2">
+        <div class="mb-4 flex flex-wrap items-center gap-2">
+          {event.type && <span class="rounded-full bg-gray-900 px-3 py-1 text-xs font-bold text-white">{event.type}</span>}
+          <span
+            class:list={[
+              'rounded-full px-3 py-1 text-xs font-bold',
+              date.phase === 'ended' ? 'bg-gray-100 text-gray-500' : date.phase === 'ongoing' ? 'bg-emerald-50 text-emerald-700' : 'bg-primary-50 text-primary-700',
+            ]}
+          >
+            {PHASE_LABEL[date.phase]}
+          </span>
+        </div>
+        <h1 class="text-2xl font-black leading-tight tracking-tight text-gray-900 sm:text-3xl">{event.title}</h1>
+        <a href={ROUTES.company(event.company.slug)} class="mt-4 flex items-center gap-3 rounded-2xl p-1 transition hover:bg-gray-50">
+          <CompanyLogo name={event.company.name} src={event.company.logoUrl} size="sm" />
+          <span class="min-w-0">
+            <span class="block text-xs text-gray-400">Organizatör</span>
+            <span class="block truncate text-sm font-bold text-gray-900">{event.company.name}</span>
+          </span>
+        </a>
+        <ul class="mt-5 space-y-2.5 text-sm text-gray-700">
+          <li class="flex items-start gap-2"><Clock size={18} className="mt-0.5 shrink-0 text-primary-500" aria-hidden="true" />{date.longLabel}</li>
+          <li class="flex items-start gap-2">
+            {isOnline ? <Globe size={18} className="mt-0.5 shrink-0 text-primary-500" aria-hidden="true" /> : <MapPin size={18} className="mt-0.5 shrink-0 text-primary-500" aria-hidden="true" />}
+            {getEventLocationLabel(event)}
+          </li>
+          {event.registrationCount > 0 && (
+            <li class="flex items-start gap-2"><UsersRound size={18} className="mt-0.5 shrink-0 text-primary-500" aria-hidden="true" />{event.registrationCount} kişi kayıt oldu</li>
+          )}
+        </ul>
+      </div>
+    </header>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-3 lg:gap-8">
+      <div class="space-y-6 lg:col-span-2">
+        <article class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8">
+          <h2 class="mb-5 text-xl font-bold text-gray-900">Etkinlik hakkında</h2>
+          {event.descriptionHtml ? <div class="prose-ys" set:html={event.descriptionHtml} /> : <p class="text-gray-500">Açıklama eklenmemiş.</p>}
+        </article>
+
+        {
+          event.program.length > 0 && (
+            <section class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8" aria-labelledby="program-title">
+              <h2 id="program-title" class="mb-6 text-xl font-bold text-gray-900">Program</h2>
+              <ol class="relative space-y-6 border-l-2 border-primary-100 pl-6">
+                {event.program.map((session) => (
+                  <li class="relative">
+                    <span class="absolute -left-[33px] top-1 h-4 w-4 rounded-full border-4 border-white bg-primary-500 shadow" aria-hidden="true" />
+                    {formatSessionTime(session.startTime) && (
+                      <p class="text-xs font-bold uppercase tracking-wide text-primary-600">
+                        {[formatSessionTime(session.startTime), formatSessionTime(session.endTime)].filter(Boolean).join(' – ')}
+                      </p>
+                    )}
+                    <h3 class="mt-1 font-bold text-gray-900">{session.title}</h3>
+                    {session.description && <p class="mt-1 text-sm text-gray-600">{session.description}</p>}
+                    {session.speakers.length > 0 && (
+                      <p class="mt-2 flex items-center gap-1.5 text-xs font-semibold text-gray-500">
+                        <Mic2 size={14} aria-hidden="true" />
+                        {session.speakers.map((speaker) => speaker.name).join(', ')}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
+
+        {
+          event.speakers.length > 0 && (
+            <section class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8" aria-labelledby="speakers-title">
+              <h2 id="speakers-title" class="mb-6 text-xl font-bold text-gray-900">Konuşmacılar</h2>
+              <ul class="grid gap-4 sm:grid-cols-2">
+                {event.speakers.map((speaker) => (
+                  <li class="flex items-center gap-4 rounded-2xl border border-gray-100 p-4">
+                    {speaker.imageUrl ? (
+                      <img src={speaker.imageUrl} alt="" loading="lazy" class="h-14 w-14 shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-50 font-bold text-primary-700">{getInitials(speaker.name)}</span>
+                    )}
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate font-bold text-gray-900">{speaker.name}</p>
+                      {(speaker.role || speaker.companyName) && <p class="truncate text-sm text-gray-500">{[speaker.role, speaker.companyName].filter(Boolean).join(' · ')}</p>}
+                    </div>
+                    {speaker.linkedinUrl && (
+                      <a href={speaker.linkedinUrl} target="_blank" rel="noopener noreferrer" class="flex h-10 w-10 items-center justify-center rounded-xl text-gray-400 transition hover:bg-blue-50 hover:text-blue-600" aria-label={`${speaker.name} LinkedIn profili`}>
+                        <SocialIcon platform="linkedin" class="h-[18px] w-[18px]" />
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        }
+
+        {
+          event.mapEmbedUrl && (
+            <section class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm" aria-labelledby="map-title">
+              <h2 id="map-title" class="p-5 pb-0 text-xl font-bold text-gray-900 sm:p-8 sm:pb-0">Konum</h2>
+              <p class="px-5 pt-2 text-sm text-gray-600 sm:px-8">{getEventLocationLabel(event)}</p>
+              <iframe src={event.mapEmbedUrl} title="Etkinlik konumu haritası" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="mt-5 h-72 w-full border-0" />
+            </section>
+          )
+        }
+      </div>
+
+      <aside class="space-y-6 lg:sticky lg:top-24 lg:self-start">
+        <RegisterPanel
+          client:load
+          eventId={event.id}
+          eventTitle={event.title}
+          eventPath={canonicalPath}
+          dateLabel={date.label}
+          initialState={registrationState}
+          externalUrl={event.externalApplicationUrl}
+          contracts={event.contracts}
+          remainingQuota={event.remainingQuota}
+        />
+
+        <section class="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm" aria-labelledby="event-facts">
+          <h2 id="event-facts" class="mb-4 font-bold text-gray-900">Etkinlik bilgileri</h2>
+          <dl class="space-y-4">
+            {
+              facts.map(({ icon: Icon, label, value }) => (
+                <div class="flex gap-3">
+                  <dt class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-50 text-gray-500">
+                    <Icon size={17} aria-hidden="true" />
+                    <span class="sr-only">{label}</span>
+                  </dt>
+                  <dd class="min-w-0 text-sm">
+                    <span class="block text-xs font-medium text-gray-400" aria-hidden="true">{label}</span>
+                    <span class="font-semibold text-gray-800">{value}</span>
+                  </dd>
+                </div>
+              ))
+            }
+          </dl>
+          <a href={ROUTES.company(event.company.slug)} class="mt-5 flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-2.5 text-sm font-bold text-gray-700 transition hover:border-primary-300 hover:text-primary-700">
+            <Building2 size={16} aria-hidden="true" />
+            Organizatörü incele
+          </a>
+        </section>
+      </aside>
+    </div>
+
+    {
+      otherEvents.length > 0 && (
+        <section class="mt-14" aria-labelledby="more-events">
+          <div class="mb-6 flex items-end justify-between gap-4">
+            <h2 id="more-events" class="text-2xl font-extrabold text-gray-900">{event.company.name} etkinlikleri</h2>
+            <a href={ROUTES.companyEvents(event.company.slug)} class="hidden shrink-0 text-sm font-bold text-primary-600 hover:underline sm:block">Tümünü gör</a>
+          </div>
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {otherEvents.map((item) => <EventCard event={item} hideCompany />)}
+          </div>
+        </section>
+      )
+    }
+  </Container>
+
+  <ViewTracker kind="events" id={event.id} />
+</BaseLayout>

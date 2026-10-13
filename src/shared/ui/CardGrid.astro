@@ -1,0 +1,40 @@
+---
+/**
+ * [MODÜL: KART IZGARASI — UI GENİŞLETMESİ]
+ * Amaç: Liste bölümlerinde aynı responsive ızgarayı ve boş durum ekranını kullanmak (DRY).
+ * Mobil: tek kolon · Tablet: 2 · Masaüstü: 3 (veya 4).
+ */
+import { EmptyState } from '@/shared/ui';
+import type { NavIcon } from '@/shared/ui';
+
+interface Props {
+  isEmpty: boolean;
+  emptyIcon: NavIcon;
+  emptyTitle: string;
+  emptyDescription?: string;
+  /** Boş durumda gösterilecek tek aksiyon (Astro → React JSX prop'u geçilemediği için veri olarak). */
+  emptyAction?: { label: string; href: string };
+  columns?: 3 | 4;
+}
+
+const { isEmpty, emptyIcon, emptyTitle, emptyDescription, emptyAction, columns = 3 } = Astro.props;
+---
+
+{
+  isEmpty ? (
+    <div class="rounded-3xl border border-dashed border-gray-300 bg-white pb-2">
+      <EmptyState icon={emptyIcon} title={emptyTitle} description={emptyDescription} compact />
+      {emptyAction && (
+        <div class="-mt-4 mb-8 flex justify-center">
+          <a href={emptyAction.href} class="rounded-full bg-gray-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-gray-700">
+            {emptyAction.label}
+          </a>
+        </div>
+      )}
+    </div>
+  ) : (
+    <div class:list={['grid grid-cols-1 gap-5 sm:grid-cols-2 lg:gap-6', columns === 4 ? 'lg:grid-cols-3 xl:grid-cols-4' : 'lg:grid-cols-3']}>
+      <slot />
+    </div>
+  )
+}
