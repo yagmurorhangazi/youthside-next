@@ -13,6 +13,6 @@ const rawRedirect = Astro.url.searchParams.get('redirect');
 const redirect = rawRedirect ? safeRedirect(rawRedirect) : null;
 ---
 
-<AuthLayout title="Kayıt Ol" heading="Ücretsiz hesabını oluştur" subheading="Bir dakikada kaydol, fırsatları kaçırma.">
+<AuthLayout title="Kayıt Ol" heading="Ücretsiz hesabını oluştur" subheading="Bir dakikada kaydol, fırsatları kaçırma." socialIntent="register">
   <RegisterForm client:load redirect={redirect} />
 </AuthLayout>

@@ -17,6 +17,12 @@ export interface FormErrorState {
 
 export const NO_ERRORS: FormErrorState = { fields: {}, message: null };
 
+/** Tek alanın hatasını ekler/kaldırır (anlık alan kontrolü için); diğer alanlara dokunmaz. */
+export function withFieldError(state: FormErrorState, field: string, message: string | null): FormErrorState {
+  const { [field]: _previous, ...rest } = state.fields;
+  return { ...state, fields: message ? { ...rest, [field]: message } : rest };
+}
+
 export function toFormErrors(error: ActionError | undefined): FormErrorState {
   if (!error) return NO_ERRORS;
   if (isInputError(error)) {

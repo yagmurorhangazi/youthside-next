@@ -25,6 +25,16 @@ export function truncate(text: string, max: number): string {
 }
 
 /**
+ * Kişi adındaki her parçanın ilk harfini Türkçe yazımına göre büyütür.
+ * Devamındaki harfleri değiştirmemek; "McDonald" gibi özel yazımları korur.
+ */
+export function capitalizePersonName(value: string): string {
+  return value.replace(/(^|[\s'’-])(\p{L})/gu, (_, separator: string, letter: string) => {
+    return `${separator}${letter.toLocaleUpperCase('tr-TR')}`;
+  });
+}
+
+/**
  * Ad soyaddan baş harf üretir: "Ayşe Nur Yılmaz" → "AY", "Ayşe" → "A".
  * Avatar görseli olmayan kullanıcı/şirketlerde fallback olarak kullanılır.
  */

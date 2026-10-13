@@ -5,7 +5,7 @@
 
 import { useId, useState, type FormEvent } from 'react';
 import { actions } from 'astro:actions';
-import { KeyRound } from 'lucide-react';
+import { KeyRound, ShieldCheck } from 'lucide-react';
 import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
 import { Button, FormAlert, FormField, PasswordInput } from '@/shared/ui';
 
@@ -36,11 +36,16 @@ export default function ChangePasswordForm() {
   const id = (name: string) => `${uid}-${name}`;
 
   return (
-    <form onSubmit={onSubmit} noValidate className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
-      <h2 className="mb-5 flex items-center gap-2 font-bold text-gray-900">
-        <KeyRound size={18} className="text-primary-500" aria-hidden="true" />
-        Şifre değiştir
-      </h2>
+    <form onSubmit={onSubmit} noValidate className="rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-card sm:p-6">
+      <div className="mb-6 flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+          <KeyRound size={18} aria-hidden="true" />
+        </span>
+        <div>
+          <h2 className="font-semibold text-slate-950">Hesap güvenliği</h2>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs leading-5 text-slate-400"><ShieldCheck size={13} aria-hidden="true" /> Güçlü ve benzersiz bir şifre kullanmanı öneririz.</p>
+        </div>
+      </div>
       <div className="grid gap-4 md:grid-cols-3">
         <FormField id={id('current')} label="Mevcut şifre" error={errors.fields.currentPassword}>
           {(a11y) => <PasswordInput id={id('current')} name="currentPassword" autoComplete="current-password" {...a11y} />}
@@ -55,7 +60,7 @@ export default function ChangePasswordForm() {
       {errors.message && <FormAlert className="mt-4">{errors.message}</FormAlert>}
       {done && <FormAlert variant="success" className="mt-4">Şifren güncellendi.</FormAlert>}
       <div className="mt-5 flex justify-end">
-        <Button type="submit" variant="secondary" isLoading={pending} className="w-full sm:w-auto">
+        <Button type="submit" variant="secondary" isLoading={pending} className="w-full rounded-2xl sm:w-auto">
           Şifreyi güncelle
         </Button>
       </div>

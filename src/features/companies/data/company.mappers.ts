@@ -6,7 +6,7 @@
  */
 
 import { bool, num, records, str, type UnknownRecord } from '@/shared/api/parse';
-import { htmlToText, sanitizeRichText } from '@/shared/lib/sanitize';
+import { htmlToText, sanitizeAboutHtml, sanitizeRichText } from '@/shared/lib/sanitize';
 import { truncate } from '@/shared/lib/text';
 import { extractMapEmbedUrl, toYoutubeEmbed } from '@/shared/lib/embed';
 import type {
@@ -17,15 +17,15 @@ import type {
   CultureBlock,
   GalleryItem,
   SocialLink,
-  SocialPlatform,
 } from '../types';
-
-const PLATFORMS: readonly SocialPlatform[] = ['linkedin', 'twitter', 'facebook', 'instagram', 'youtube'];
+import { isSocialPlatform } from '../lib/social-platforms';
 
 export function toSocials(value: unknown): SocialLink[] {
-  return records(value)
-    .map((item) => ({ platform: str(item.platform)?.toLowerCase() as SocialPlatform, url: str(item.url) ?? '' }))
-    .filter((link) => PLATFORMS.includes(link.platform) && /^https?:\/\//i.test(link.url));
+  return records(value).flatMap((item) => {
+    const platform = str(item.platform)?.toLowerCase();
+    const url = str(item.url) ?? '';
+    return isSocialPlatform(platform) && /^https?:\/\//i.test(url) ? [{ platform, url }] : [];
+  });
 }
 
 /** Kullanıcının girdiği site adresini "https://" ile tamamlar. */
@@ -70,13 +70,15 @@ function toAddresses(raw: UnknownRecord): CompanyAddress[] {
 }
 
 export function toCompanyProfile(raw: UnknownRecord): CompanyProfile {
-  const aboutHtml = sanitizeRichText(str(raw.about));
+  const aboutHtml = sanitizeAboutHtml(str(raw.about));
   return {
     ...base(raw),
     aboutHtml,
     aboutText: truncate(htmlToText(str(raw.about)), 300),
     website: toWebsite(raw.website),
     addresses: toAddresses(raw),
+    // Alan gelmezse aktif sayılır: API sözleşmesi değişirse tüm profiller yanlışlıkla 404 olmasın.
+    isActive: raw.is_active === undefined || raw.is_active === null ? true : bool(raw.is_active),
   };
 }
 
@@ -98,6 +100,7 @@ export function toAward(raw: UnknownRecord): Award {
     id: str(raw.id) ?? '',
     title: str(raw.title) ?? 'Ödül',
     description: htmlToText(str(raw.content)) || null,
+    contentHtml: sanitizeRichText(str(raw.content)),
     imageUrl: str(raw.mediaUrl),
     year: num(raw.year),
     givenBy: str(raw.givenBy),

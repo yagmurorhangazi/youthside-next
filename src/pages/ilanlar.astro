@@ -50,18 +50,16 @@ const hasFilters = Boolean(filters.q) || Object.values(values).some((list) => li
     description="Kariyerine uygun fırsatı keşfet, ayrıntıları incele ve başvurunu kolayca tamamla."
     breadcrumbs={[{ label: 'İlanlar' }]}
   >
-    <div class="rounded-[24px] border border-white/80 bg-white/80 p-3 shadow-soft backdrop-blur-sm md:p-4">
-      <FilterBar
-        client:idle
-        basePath={ROUTES.jobs}
-        searchPlaceholder="Pozisyon veya şirket ara"
-        groups={groups}
-        sorts={JOB_SORTS}
-        initial={{ q: filters.q, values, sort: sortKey }}
-        total={result?.total ?? 0}
-        resultNoun="ilan"
-      />
-    </div>
+    <FilterBar
+      client:idle
+      basePath={ROUTES.jobs}
+      searchPlaceholder="Pozisyon veya şirket ara"
+      groups={groups}
+      sorts={JOB_SORTS}
+      initial={{ q: filters.q, values, sort: sortKey }}
+      total={result?.total ?? 0}
+      resultNoun="ilan"
+    />
   </PageHeader>
 
   <section class="bg-slate-50/60" aria-label="İlan sonuçları">

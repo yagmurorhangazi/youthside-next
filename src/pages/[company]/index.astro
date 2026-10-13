@@ -7,10 +7,12 @@
  *
  * Not: /ilanlar, /etkinlikler gibi sabit rotalar bu dinamik rotadan önceliklidir (Astro rota önceliği).
  */
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, CalendarDays, Sparkles } from 'lucide-react';
 import { ROUTES } from '@/config/site';
 import { createSafeLoader } from '@/core/safe';
+import AddressCard from '@/features/companies/components/AddressCard.astro';
 import GalleryGrid from '@/features/companies/components/GalleryGrid';
+import OrganizationInfoCard from '@/features/companies/components/OrganizationInfoCard.astro';
 import ProfileLayout from '@/features/companies/components/ProfileLayout.astro';
 import { loadProfileContext } from '@/features/companies/lib/profile-loader';
 import EventCard from '@/features/events/components/EventCard.astro';
@@ -31,17 +33,25 @@ const [culture, jobs, events] = await Promise.all([
 ]);
 
 const cultureBlocks = (culture ?? []).filter((block) => block.contentHtml || block.mediaUrl);
-const sectionTitle = 'text-xl font-bold text-gray-900 sm:text-2xl';
-const card = 'rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8';
+const sectionTitle = 'text-xl font-extrabold tracking-[-0.02em] text-slate-950 sm:text-2xl';
+const card = 'rounded-3xl border border-slate-200/80 bg-white p-5 shadow-card sm:p-7';
 ---
 
-<ProfileLayout context={context} active="overview">
-  <div class="grid gap-6 lg:grid-cols-3 lg:gap-8">
-    <div class="space-y-6 lg:col-span-2">
+<ProfileLayout context={context} active="overview" detailsInSidebar>
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-8">
+    <div class="space-y-6">
       <!-- Hakkında -->
       <section class={card} aria-labelledby="about-title">
-        <h2 id="about-title" class:list={[sectionTitle, 'mb-5']}>{isClub ? 'Kulüp hakkında' : 'Hakkımızda'}</h2>
-        {profile.aboutHtml ? <div class="prose-ys" set:html={profile.aboutHtml} /> : <p class="text-gray-500">Henüz tanıtım metni eklenmemiş.</p>}
+        <div class="mb-6 flex items-center gap-3 border-b border-slate-100 pb-5">
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+            <Sparkles size={19} aria-hidden="true" />
+          </span>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{isClub ? 'Topluluk' : 'İşveren markası'}</p>
+            <h2 id="about-title" class={sectionTitle}>{isClub ? 'Kulüp hakkında' : 'Hakkımızda'}</h2>
+          </div>
+        </div>
+        {profile.aboutHtml ? <div class="prose-ys prose-quill" set:html={profile.aboutHtml} /> : <p class="text-gray-500">Henüz tanıtım metni eklenmemiş.</p>}
       </section>
 
       <!-- Kültür blokları: görsel/metin dönüşümlü -->
@@ -55,7 +65,7 @@ const card = 'rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8';
                     block.mediaType === 'youtube' ? (
                       <iframe src={block.mediaUrl} title={block.title ?? 'Video'} loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen class="absolute inset-0 h-full w-full border-0" />
                     ) : (
-                      <video src={block.mediaUrl} controls preload="metadata" playsinline class="absolute inset-0 h-full w-full bg-black object-contain" />
+                      <video src={block.mediaUrl} controls preload="metadata" playsinline data-preview-frame class="absolute inset-0 h-full w-full bg-black object-contain" />
                     )
                   ) : (
                     <img src={block.mediaUrl} alt={block.title ?? ''} loading="lazy" class="absolute inset-0 h-full w-full object-cover" />
@@ -74,33 +84,59 @@ const card = 'rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8';
       <!-- Galeri önizleme -->
       {
         gallery.length > 0 && (
-          <section class={card} aria-labelledby="gallery-title">
-            <div class="mb-5 flex items-end justify-between gap-4">
-              <h2 id="gallery-title" class={sectionTitle}>{isClub ? 'Kulüpten kareler' : 'Şirketten kareler'}</h2>
-              {gallery.length > 6 && (
-                <a href={ROUTES.companyPhotos(slug)} class="flex shrink-0 items-center gap-1 text-sm font-bold text-primary-600 hover:underline">
-                  Tümü ({gallery.length}) <ArrowRight size={15} aria-hidden="true" />
+          <section class="relative overflow-hidden rounded-[2rem] bg-slate-950 p-5 shadow-lift sm:p-7" aria-labelledby="gallery-title">
+            <div class="pointer-events-none absolute right-0 top-0 h-64 w-64 translate-x-1/3 -translate-y-1/3 rounded-full bg-primary-600/[0.12] blur-3xl" aria-hidden="true"></div>
+            <div class="relative mb-6 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div class="max-w-xl">
+                <p class="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-400">{isClub ? 'Topluluk galerisi' : 'Kurumsal galeri'}</p>
+                <h2 id="gallery-title" class="text-2xl font-extrabold tracking-[-0.025em] text-white sm:text-[1.75rem]">{isClub ? 'Kulüpten kareler' : 'Şirketten kareler'}</h2>
+                <p class="mt-2 text-sm leading-6 text-slate-400">
+                  {isClub ? 'Etkinliklerden ve kampüs yaşamından öne çıkan anlar.' : 'Çalışma kültürünü, ekibi ve kurum yaşamını fotoğraflarla keşfet.'}
+                </p>
+              </div>
+              {gallery.length > 3 && (
+                <a href={ROUTES.companyPhotos(slug)} class="inline-flex min-h-11 w-fit shrink-0 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.08] px-4 text-sm font-semibold text-white transition hover:border-white/25 hover:bg-white/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400">
+                  Tüm galeri
+                  <span class="text-xs font-medium text-white/50">{gallery.length} kare</span>
+                  <ArrowRight size={15} aria-hidden="true" />
                 </a>
               )}
             </div>
-            <GalleryGrid client:visible images={gallery} companyName={profile.name} limit={6} />
+            <div class="relative">
+              <GalleryGrid client:visible images={gallery} companyName={profile.name} limit={3} />
+            </div>
           </section>
         )
       }
     </div>
 
     <!-- Kenar çubuğu -->
-    <aside class="space-y-6">
+    <aside class="space-y-6 lg:sticky lg:top-24 lg:self-start">
+      <OrganizationInfoCard profile={profile} />
+
+      <AddressCard addresses={profile.addresses} companySlug={profile.slug} />
+
       {
         jobs && jobs.items.length > 0 && (
           <section class={card} aria-labelledby="side-jobs">
-            <h2 id="side-jobs" class="mb-4 font-bold text-gray-900">Açık ilanlar</h2>
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+                  <BriefcaseBusiness size={17} aria-hidden="true" />
+                </span>
+                <h2 id="side-jobs" class="font-bold text-slate-950">Açık ilanlar</h2>
+              </div>
+              <span class="rounded-lg bg-primary-50 px-2 py-1 text-[10px] font-black text-primary-700">{jobs.total}</span>
+            </div>
             <ul class="space-y-3">
               {jobs.items.map((job) => (
                 <li>
-                  <a href={ROUTES.jobDetail(slug, job.slug)} class="block rounded-2xl border border-gray-100 p-4 transition hover:border-primary-200 hover:bg-primary-50/40">
-                    <p class="font-bold text-gray-900">{job.title}</p>
-                    <p class="mt-1 text-xs text-gray-500">{[job.type, job.workModel, job.locations[0]].filter(Boolean).join(' · ')}</p>
+                  <a href={ROUTES.jobDetail(slug, job.slug)} class="group/job block rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:border-primary-200 hover:bg-primary-50/50">
+                    <div class="flex items-start justify-between gap-3">
+                      <p class="font-bold leading-snug text-slate-900">{job.title}</p>
+                      <ArrowRight size={15} className="mt-0.5 shrink-0 text-slate-300 transition group-hover/job:translate-x-0.5 group-hover/job:text-primary-600" aria-hidden="true" />
+                    </div>
+                    <p class="mt-1.5 text-xs text-slate-500">{[job.type, job.workModel, job.locations[0]].filter(Boolean).join(' · ')}</p>
                   </a>
                 </li>
               ))}
@@ -113,30 +149,6 @@ const card = 'rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8';
           </section>
         )
       }
-
-      {
-        profile.addresses.length > 0 && (
-          <section class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm" aria-labelledby="address-title">
-            <h2 id="address-title" class="px-6 pt-6 font-bold text-gray-900">{profile.addresses.length > 1 ? 'Adresler' : 'Adres'}</h2>
-            <ul class="divide-y divide-gray-100">
-              {profile.addresses.map((address, index) => (
-                <li class="p-6 pt-4">
-                  {address.title && <p class="mb-1 text-sm font-bold text-gray-800">{address.title}</p>}
-                  {address.address && (
-                    <p class="flex items-start gap-2 text-sm text-gray-600">
-                      <MapPin size={16} className="mt-0.5 shrink-0 text-primary-500" aria-hidden="true" />
-                      {address.address}
-                    </p>
-                  )}
-                  {address.mapEmbedUrl && index === 0 && (
-                    <iframe src={address.mapEmbedUrl} title={`${profile.name} konumu`} loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="mt-4 h-52 w-full rounded-2xl border-0" />
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      }
     </aside>
   </div>
 
@@ -145,7 +157,15 @@ const card = 'rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8';
     events && events.items.length > 0 && (
       <section class="mt-12" aria-labelledby="profile-events">
         <div class="mb-6 flex items-end justify-between gap-4">
-          <h2 id="profile-events" class="text-2xl font-extrabold text-gray-900">Yaklaşan etkinlikler</h2>
+          <div class="flex items-center gap-3">
+            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-50 text-purple-700">
+              <CalendarDays size={20} aria-hidden="true" />
+            </span>
+            <div>
+              <p class="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Takvim</p>
+              <h2 id="profile-events" class="text-2xl font-extrabold tracking-[-0.02em] text-slate-950">Yaklaşan etkinlikler</h2>
+            </div>
+          </div>
           <a href={ROUTES.companyEvents(slug)} class="flex shrink-0 items-center gap-1 text-sm font-bold text-primary-600 hover:underline">
             Tümü <ArrowRight size={15} aria-hidden="true" />
           </a>
@@ -156,4 +176,10 @@ const card = 'rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8';
       </section>
     )
   }
+
+  <script>
+    // Posteri olmayan videolarda 1. saniyeyi önizleme karesi yap (kültür blokları + Hakkımızda).
+    import { initVideoPreviews } from '@/shared/lib/video-preview';
+    initVideoPreviews();
+  </script>
 </ProfileLayout>

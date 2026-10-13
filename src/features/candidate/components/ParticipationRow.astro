@@ -4,7 +4,7 @@
  * Amaç: "Başvurularım" ve "Etkinliklerim" listelerinde tek bir kaydı yatay satır olarak göstermek.
  * Aynı görsel dili iki listede de kullanmak için ortak bileşen (DRY); içerik veriyle gelir.
  */
-import { ChevronRight } from 'lucide-react';
+import { Building2, CalendarClock, ChevronRight } from 'lucide-react';
 import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
 
 export interface Props {
@@ -31,18 +31,25 @@ const TONES = {
 ---
 
 <li>
-  <a href={href} class="group flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-primary-200 hover:shadow-md sm:p-5">
-    <CompanyLogo name={companyName} src={companyLogo} size="sm" class="sm:h-14 sm:w-14" />
+  <a href={href} class="group flex min-h-24 items-center gap-3 rounded-[20px] border border-slate-200/70 bg-slate-50/40 p-3.5 transition hover:border-primary-200 hover:bg-white hover:shadow-[0_14px_35px_-25px_rgb(15_23_42/0.4)] sm:gap-4 sm:p-4">
+    <CompanyLogo name={companyName} src={companyLogo} size="md" />
     <div class="min-w-0 flex-1">
-      <p class="truncate font-bold text-gray-900 group-hover:text-primary-700">{title}</p>
-      <p class="truncate text-sm text-gray-500">{[companyName, meta].filter(Boolean).join(' · ')}</p>
-      {dateText && <p class="mt-1 text-xs text-gray-400 sm:hidden">{dateText}</p>}
+      <div class="flex min-w-0 flex-wrap items-center gap-2">
+        <p class="line-clamp-1 font-semibold text-slate-950 transition-colors group-hover:text-primary-700">{title}</p>
+        {badge && <span class:list={['shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold', TONES[badge.tone]]}>{badge.label}</span>}
+      </div>
+      <p class="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-slate-500">
+        <Building2 size={13} className="shrink-0 text-slate-400" aria-hidden="true" />
+        <span class="truncate">{[companyName, meta].filter(Boolean).join(' · ')}</span>
+      </p>
+      {dateText && (
+        <p class="mt-1.5 flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+          <CalendarClock size={12} aria-hidden="true" /> {dateText}
+        </p>
+      )}
     </div>
-    <div class="hidden shrink-0 flex-col items-end gap-1.5 sm:flex">
-      {badge && <span class:list={['rounded-full px-2.5 py-1 text-xs font-bold', TONES[badge.tone]]}>{badge.label}</span>}
-      {dateText && <span class="text-xs text-gray-400">{dateText}</span>}
-    </div>
-    {badge && <span class:list={['shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold sm:hidden', TONES[badge.tone]]}>{badge.label}</span>}
-    <ChevronRight size={18} className="shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-primary-500" aria-hidden="true" />
+    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-300 shadow-sm ring-1 ring-slate-200/70 transition group-hover:bg-primary-600 group-hover:text-white group-hover:ring-primary-600">
+      <ChevronRight size={17} aria-hidden="true" />
+    </span>
   </a>
 </li>

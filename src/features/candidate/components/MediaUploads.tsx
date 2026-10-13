@@ -7,7 +7,7 @@
 
 import { useRef, useState, type ChangeEvent } from 'react';
 import { actions } from 'astro:actions';
-import { Camera, FileText, Upload } from 'lucide-react';
+import { Camera, CheckCircle2, FileText, Upload } from 'lucide-react';
 import { toFormErrors } from '@/shared/lib/action-result';
 import { FormAlert, UserAvatar } from '@/shared/ui';
 
@@ -66,18 +66,19 @@ export default function MediaUploads({ name, avatarUrl: initialAvatar, resumeUrl
     setFeedback({ variant: 'success', text: `${rule.label} kaydedildi.` });
   };
 
-  const tile = 'flex items-center gap-4 rounded-3xl border border-gray-100 bg-white p-5 shadow-sm';
+  const tile = 'flex min-h-36 items-center gap-4 p-5';
   const button =
-    'inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 px-4 text-sm font-bold text-gray-700 transition hover:border-primary-300 hover:text-primary-700 disabled:opacity-50';
+    'inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-primary-300 hover:text-primary-700 disabled:opacity-50';
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid overflow-hidden rounded-[20px] border border-slate-200/70 bg-white shadow-card divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0">
         <div className={tile}>
-          <UserAvatar name={name} src={avatarUrl} size="lg" className="scale-125" />
-          <div className="min-w-0 flex-1 pl-2">
-            <p className="font-bold text-gray-900">Profil fotoğrafı</p>
-            <p className="text-xs text-gray-500">JPG, PNG veya WEBP · en fazla 5 MB</p>
+          <UserAvatar name={name} src={avatarUrl} size="lg" className="scale-110 ring-4 ring-primary-50" />
+          <div className="min-w-0 flex-1 pl-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.11em] text-primary-600">Profil görünümü</p>
+            <p className="mt-1 font-semibold text-slate-950">Profil fotoğrafı</p>
+            <p className="mt-0.5 text-xs leading-5 text-slate-500">JPG, PNG veya WEBP · en fazla 5 MB</p>
             <button type="button" className={`${button} mt-3`} onClick={() => avatarInput.current?.click()} disabled={pending !== null}>
               <Camera size={16} aria-hidden="true" />
               {pending === 'avatar' ? 'Yükleniyor…' : avatarUrl ? 'Değiştir' : 'Fotoğraf yükle'}
@@ -87,12 +88,14 @@ export default function MediaUploads({ name, avatarUrl: initialAvatar, resumeUrl
         </div>
 
         <div className={tile}>
-          <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${resumeUrl ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+          <span className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${resumeUrl ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
             <FileText size={26} aria-hidden="true" />
+            {resumeUrl && <CheckCircle2 size={16} className="absolute -right-1 -top-1 rounded-full bg-white" aria-hidden="true" />}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-gray-900">CV / Özgeçmiş</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.11em] text-slate-400">Başvuru belgesi</p>
+            <p className="mt-1 font-semibold text-slate-950">CV / Özgeçmiş</p>
+            <p className="mt-0.5 text-xs leading-5 text-slate-500">
               {resumeUrl ? (
                 <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary-600 hover:underline">
                   Yüklü CV’yi görüntüle

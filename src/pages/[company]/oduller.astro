@@ -3,9 +3,12 @@
  * [SAYFA: PROFİL — ÖDÜLLER SEKMESİ]
  * URL: /{slug}/oduller · Referans: youthside-2026-ui/sirket-profili/oduller/index.php
  * Veri: companies/get_award_blocks (profil yükleyicisinden gelir; ek istek yok).
+ * Uzun metinler kartta kırpılır; tamamı "Detayları görüntüle" penceresinde okunur.
  */
 import { Award as AwardIcon, Trophy } from 'lucide-react';
+import AwardDetails from '@/features/companies/components/AwardDetails';
 import ProfileLayout from '@/features/companies/components/ProfileLayout.astro';
+import { awardPreview, hasAwardDetails } from '@/features/companies/lib/awards';
 import { loadProfileContext } from '@/features/companies/lib/profile-loader';
 import CardGrid from '@/shared/ui/CardGrid.astro';
 
@@ -29,7 +32,10 @@ if (!context) return Astro.rewrite('/404');
           <div class="flex flex-1 flex-col p-5">
             <h2 class="font-bold leading-snug text-gray-900">{award.title}</h2>
             {(award.givenBy || award.year) && <p class="mt-1 text-sm font-medium text-gray-500">{[award.givenBy, award.year].filter(Boolean).join(' · ')}</p>}
-            {award.description && <p class="mt-3 text-sm text-gray-600">{award.description}</p>}
+            {awardPreview(award) && <p class="mt-3 text-sm text-gray-600">{awardPreview(award)}</p>}
+            {hasAwardDetails(award) && (
+              <AwardDetails client:visible title={award.title} contentHtml={award.contentHtml} imageUrl={award.imageUrl} year={award.year} givenBy={award.givenBy} />
+            )}
           </div>
         </article>
       ))

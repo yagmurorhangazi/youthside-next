@@ -31,20 +31,25 @@ const light = tone === 'light';
 ---
 
 <nav aria-label="Konum" class="min-w-0">
-  <ol class:list={['flex min-w-0 items-center gap-1 text-xs font-medium sm:text-sm', light ? 'text-white/70' : 'text-gray-500']}>
+  <ol
+    class:list={[
+      'flex min-h-9 w-fit min-w-0 items-center gap-1 rounded-xl px-2.5 text-xs font-medium sm:text-sm',
+      light ? 'bg-white/10 text-white/70 ring-1 ring-white/15' : 'bg-white/75 text-slate-500 shadow-sm ring-1 ring-slate-200/80 backdrop-blur-sm',
+    ]}
+  >
     {
       all.map((item, index) => {
         const isLast = index === all.length - 1;
         return (
           <li class:list={['flex min-w-0 items-center gap-1', !isLast && index > 0 && 'hidden sm:flex']}>
-            {index > 0 && <ChevronRight size={14} className="shrink-0 opacity-60" aria-hidden="true" />}
+            {index > 0 && <ChevronRight size={14} className="shrink-0 opacity-45" strokeWidth={2.5} aria-hidden="true" />}
             {isLast || !item.href ? (
-              <span aria-current={isLast ? 'page' : undefined} class:list={['truncate', light ? 'text-white' : 'text-gray-900', 'font-semibold']}>
+              <span aria-current={isLast ? 'page' : undefined} class:list={['truncate', light ? 'text-white' : 'text-slate-900', 'font-semibold']}>
                 {item.label}
               </span>
             ) : (
-              <a href={item.href} class:list={['flex items-center gap-1 transition', light ? 'hover:text-white' : 'hover:text-primary-600']}>
-                {index === 0 && <House size={14} aria-hidden="true" />}
+              <a href={item.href} class:list={['flex min-h-8 items-center gap-1.5 rounded-lg px-1 transition', light ? 'hover:text-white' : 'hover:text-primary-700']}>
+                {index === 0 && <House size={14} className={light ? '' : 'text-primary-600'} aria-hidden="true" />}
                 <span class:list={[index === 0 && 'sr-only sm:not-sr-only']}>{item.label}</span>
               </a>
             )}

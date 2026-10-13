@@ -25,15 +25,12 @@ const loginHref = isAuthPage || currentPath === '/' ? ROUTES.login : `${ROUTES.l
 ---
 
 <!-- view-transition-name: sayfa geçişinde header yerinde sabit kalır; header-elevate: kaydırınca gölge -->
-<header class="header-elevate sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-md" style="view-transition-name: site-header">
+<!-- backdrop-filter sabit konumlu mobil panel için containing block oluşturduğu için header katmanında kullanılmaz. -->
+<header class="header-elevate sticky top-0 z-50 border-b border-slate-100 bg-white/95" style="view-transition-name: site-header">
   <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 md:h-20 lg:px-8">
-    <div class="flex items-center gap-1">
-      <MobileNav client:idle user={user} currentPath={currentPath} loginHref={loginHref} />
-
-      <a href={ROUTES.home} class="flex shrink-0 items-center" aria-label={`${SITE.name} ana sayfa`}>
-        <img src={SITE.logo} alt={`${SITE.name} logo`} width="150" height="40" class="h-auto w-[112px] md:w-[150px]" />
-      </a>
-    </div>
+    <a href={ROUTES.home} class="flex shrink-0 items-center" aria-label={`${SITE.name} ana sayfa`}>
+      <img src={SITE.logo} alt={`${SITE.name} logo`} width="150" height="40" class="h-auto w-[112px] md:w-[150px]" />
+    </a>
 
     <!-- Masaüstü menü -->
     <nav aria-label="Ana menü" class="hidden lg:block">
@@ -64,24 +61,27 @@ const loginHref = isAuthPage || currentPath === '/' ? ROUTES.login : `${ROUTES.l
     </nav>
 
     <!-- Aksiyonlar -->
-    <div class="flex items-center gap-3 md:gap-4">
+    <div class="flex items-center gap-2 sm:gap-3 md:gap-4">
       {
         user ? (
-          <UserMenu client:idle user={user} />
+          <div class="hidden lg:block">
+            <UserMenu client:idle user={user} />
+          </div>
         ) : (
           <>
-            <a href={loginHref} class="hidden text-sm font-semibold text-gray-700 transition-colors hover:text-primary-600 sm:block">
+            <a href={loginHref} class="hidden rounded-xl px-3 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-primary-50 hover:text-primary-700 lg:inline-flex">
               Giriş Yap
             </a>
             <a
               href={ROUTES.register}
-              class="rounded-full bg-primary-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary-600/20 transition hover:bg-primary-700 md:px-6"
+              class="hidden rounded-2xl bg-primary-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary-700/15 transition hover:bg-primary-800 lg:inline-flex md:px-6"
             >
               Kayıt Ol
             </a>
           </>
         )
       }
+      <MobileNav client:idle user={user} currentPath={currentPath} loginHref={loginHref} />
     </div>
   </div>
 </header>

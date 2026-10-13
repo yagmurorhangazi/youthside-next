@@ -4,7 +4,7 @@
  * Amaç: Adayın profil doluluk oranını ve başvuru için eksik alanları göstermek.
  * İş kuralı API'dedir (%75 eşik, ağırlıklar); bu kart yalnızca sonucu görselleştirir.
  */
-import { ArrowRight, CheckCircle2, CircleAlert } from 'lucide-react';
+import { ArrowRight, CheckCircle2, CircleAlert, CircleGauge } from 'lucide-react';
 import { ROUTES } from '@/config/site';
 import type { ProfileCompleteness } from '../types';
 
@@ -19,34 +19,38 @@ const { percentage, isEligible, threshold, missingFields } = completeness;
 const sorted = [...missingFields].sort((a, b) => b.weight - a.weight);
 ---
 
-<section class="relative overflow-hidden rounded-[24px] border border-slate-100 bg-white p-5 shadow-card sm:p-6" aria-labelledby="completeness-title">
-  <div class:list={['absolute inset-y-0 left-0 w-1.5', isEligible ? 'bg-emerald-500' : 'bg-gradient-to-b from-primary-600 to-amber-400']} aria-hidden="true"></div>
+<section class="rounded-[20px] border border-slate-200/70 bg-white p-4 shadow-card sm:p-5" aria-labelledby="completeness-title">
   <div class="flex items-start justify-between gap-4">
-    <div>
-      <p class="mb-1 text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Başvuru hazırlığı</p>
-      <h2 id="completeness-title" class="font-bold text-gray-900">Profil doluluğu</h2>
-      <p class="mt-1 text-sm text-gray-500">
-        {isEligible ? 'Profilin başvuru için hazır.' : `Başvuru yapabilmek için en az %${threshold} olmalı.`}
-      </p>
+    <div class="flex min-w-0 items-start gap-3">
+      <span class:list={['flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', isEligible ? 'bg-emerald-50 text-emerald-600' : 'bg-primary-50 text-primary-700']}>
+        {isEligible ? <CheckCircle2 size={18} aria-hidden="true" /> : <CircleGauge size={18} aria-hidden="true" />}
+      </span>
+      <div>
+        <p class="mb-1 text-[10px] font-semibold uppercase tracking-[0.11em] text-slate-400">Başvuru hazırlığı</p>
+        <h2 id="completeness-title" class="font-semibold text-slate-950">Profil doluluğu</h2>
+        <p class="mt-1 text-sm leading-5 text-slate-500">
+          {isEligible ? 'Profilin başvuru yapmak için hazır.' : `Başvuru yapabilmek için en az %${threshold} olmalı.`}
+        </p>
+      </div>
     </div>
-    <span class:list={['text-3xl font-black', isEligible ? 'text-emerald-600' : 'text-primary-600']}>%{percentage}</span>
+    <span class:list={['text-xl font-bold tracking-tight', isEligible ? 'text-emerald-600' : 'text-primary-700']}>%{percentage}</span>
   </div>
 
-  <div class="relative mt-4 h-3 overflow-hidden rounded-full bg-gray-100" role="progressbar" aria-valuenow={percentage} aria-valuemin="0" aria-valuemax="100" aria-label="Profil doluluk oranı">
+  <div class="relative mt-5 h-2.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={percentage} aria-valuemin="0" aria-valuemax="100" aria-label="Profil doluluk oranı">
     <div class:list={['h-full rounded-full transition-[width] duration-700 ease-smooth', isEligible ? 'bg-emerald-500' : 'bg-linear-to-r from-primary-500 to-amber-400']} style={`width: ${percentage}%`}></div>
     <span class="absolute inset-y-0 w-0.5 bg-gray-400/60" style={`left: ${threshold}%`} aria-hidden="true"></span>
   </div>
 
   {
     sorted.length > 0 ? (
-      <ul class="mt-5 grid gap-2 sm:grid-cols-2">
+      <ul class="mt-4 grid gap-2 sm:grid-cols-2">
         {sorted.map((field) => (
-          <li class="flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-sm">
-            <span class="flex items-center gap-2 text-gray-700">
+          <li class="flex items-center justify-between gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2.5 text-sm">
+            <span class="flex items-center gap-2 text-slate-700">
               <CircleAlert size={15} className="shrink-0 text-amber-500" aria-hidden="true" />
               {field.label}
             </span>
-            <span class="text-xs font-bold text-gray-400">+%{field.weight}</span>
+            <span class="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-400 shadow-sm">+%{field.weight}</span>
           </li>
         ))}
       </ul>
@@ -60,7 +64,7 @@ const sorted = [...missingFields].sort((a, b) => b.weight - a.weight);
 
   {
     showLink && sorted.length > 0 && (
-      <a href={ROUTES.profile} class="mt-5 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-primary-50 px-4 text-sm font-bold text-primary-700 transition hover:bg-primary-100">
+      <a href={ROUTES.profile} class="mt-4 inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-primary-700">
         Profilimi tamamla <ArrowRight size={15} aria-hidden="true" />
       </a>
     )

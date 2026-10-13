@@ -45,6 +45,7 @@ export const ROUTES = {
   companyEvents: (slug: string) => `/${slug}/etkinlikler`,
   companyAwards: (slug: string) => `/${slug}/oduller`,
   companyPhotos: (slug: string) => `/${slug}/fotograflar`,
+  companyLocations: (slug: string) => `/${slug}/konumlar`,
   jobDetail: (companySlug: string, jobSlug: string) => `/${companySlug}/ilanlar/${jobSlug}`,
   eventDetail: (companySlug: string, eventSlug: string) => `/${companySlug}/etkinlikler/${eventSlug}`,
   /** Şirket slug'ı bilinmediğinde (ör. "Başvurularım" listesi) kullanılan kısa kalıcı linkler. */

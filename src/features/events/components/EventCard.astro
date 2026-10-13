@@ -5,17 +5,17 @@
  * SRP: Tarih/konum metinleri `event-display.ts`'de üretilir; kart yalnızca yerleşimden sorumludur.
  *
  * Tasarım kararları:
- *   - Etkinlik görselleri çoğunlukla kare/dikey afiş. Sabit 16:10 çerçevede afiş KIRPILMADAN
+ *   - Etkinlik görselleri çoğunlukla kare/dikey afiş. Sabit 16:9 çerçevede afiş KIRPILMADAN
  *     (object-contain) gösterilir, boşluğu aynı görselin bulanık kopyası doldurur. Afişteki
  *     yazılar kesilmez ve tüm kartlar aynı yükseklikte kalır.
  *   - Çerçevede `overflow-hidden` + mutlak konumlu görsel: aspect-ratio'nun içerikle esnemesini önler.
- *   - Tarih, başlığın yanında takvim yaprağı olarak tek odak noktasıdır; organizatör logosu
- *     görselin üstüne binmez, içerikte küçük gösterilir.
+ *   - Organizatör, afiş ile içerik arasında ayrı bir profil kartçığıyla öne çıkarılır.
+ *   - Tarih ve konum aynı görsel dilde iki kısa bilgi satırı olarak sunulur.
  */
-import { CalendarDays, Clock, Globe, MapPin, Tent } from 'lucide-react';
+import { ArrowUpRight, CalendarDays } from 'lucide-react';
 import { ROUTES } from '@/config/site';
-import { formatTime, formatWeekday, parseDate } from '@/shared/lib/date';
-import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
+import { formatDayMonth, isSameCalendarDay, parseDate } from '@/shared/lib/date';
+import OrganizationAttribution from '@/shared/ui/OrganizationAttribution.astro';
 import { getEventDateInfo, getEventLocationLabel } from '../lib/event-display';
 import type { EventSummary } from '../types';
 
@@ -27,17 +27,20 @@ interface Props {
 
 const { event, hideCompany = false, eager = false } = Astro.props;
 const date = getEventDateInfo(event);
-const start = parseDate(event.startDate);
 const isOnline = event.locationType === 'Online';
 const isEnded = date.phase === 'ended';
 const locationLabel = getEventLocationLabel(event);
-const hasLocation = !isOnline && locationLabel !== 'Konum yakında';
 const href = ROUTES.eventDetail(event.company.slug, event.slug);
+const companyHref = ROUTES.company(event.company.slug);
+const start = parseDate(event.startDate);
+const end = parseDate(event.endDate);
+const startLabel = start ? formatDayMonth(start) : 'Yakında';
+const endLabel = end && start && !isSameCalendarDay(start, end) ? formatDayMonth(end) : end ? 'Aynı gün' : start ? 'Tek gün' : 'Belirtilmedi';
 ---
 
-<article class:list={['group relative flex h-full flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-card card-interactive', isEnded && 'opacity-75']}>
+<article class:list={['group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-card card-interactive focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-500/10', isEnded && 'opacity-80']}>
   <!-- Afiş -->
-  <div class="relative aspect-16/10 w-full overflow-hidden bg-gray-100">
+  <div class="relative mx-3 mt-3 aspect-video overflow-hidden rounded-[20px] bg-slate-100">
     {
       event.imageUrl ? (
         <>
@@ -56,62 +59,46 @@ const href = ROUTES.eventDetail(event.company.slug, event.slug);
         </div>
       )
     }
-    <div class="absolute left-3 top-3 flex flex-wrap gap-1.5">
-      {event.type && <span class="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold text-gray-900 shadow-sm ring-1 ring-black/5 backdrop-blur">{event.type}</span>}
-      {isEnded && <span class="rounded-full bg-gray-900/80 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">Sona erdi</span>}
+    <div class="absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-slate-950/25 to-transparent" aria-hidden="true"></div>
+    <div class="absolute right-3 top-3 flex flex-wrap gap-1.5">
+      {isEnded && <span class="rounded-full bg-slate-900/85 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">Sona erdi</span>}
     </div>
   </div>
+
+  {
+    !hideCompany && (
+      <div class="relative -mt-8 px-4">
+        <OrganizationAttribution name={event.company.name} logoUrl={event.company.logoUrl} href={companyHref} label="Düzenleyen" />
+      </div>
+    )
+  }
 
   <!-- İçerik -->
-  <div class="flex grow gap-4 p-5">
-    <!-- Takvim yaprağı -->
-    <div class="flex w-14 shrink-0 flex-col items-center self-start overflow-hidden rounded-2xl border border-gray-100 bg-white text-center shadow-sm" aria-hidden="true">
-      {
-        date.badge ? (
-          <>
-            <span class="w-full bg-primary-600 py-1 text-[10px] font-bold uppercase tracking-wider text-white">{date.badge.month}</span>
-            <span class="pt-1.5 text-xl font-black leading-none text-gray-900">{date.badge.days}</span>
-            <span class="pb-1.5 pt-1 text-[10px] font-semibold text-gray-400">{start ? formatWeekday(start).slice(0, 3) : ''}</span>
-          </>
-        ) : (
-          <span class="py-3 text-[10px] font-bold uppercase text-gray-400">Yakında</span>
-        )
-      }
+  <div class:list={['flex grow flex-col px-5 pb-5 text-center sm:px-6 sm:pb-6', hideCompany ? 'pt-5' : 'pt-4']}>
+    <h3 class="line-clamp-2 text-xl font-extrabold leading-snug tracking-[-0.02em] text-slate-950 transition-colors group-hover:text-primary-700">
+      {event.title}
+    </h3>
+    {event.excerpt && <p class="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{event.excerpt}</p>}
+    {event.type && <span class="mx-auto mt-4 inline-flex min-h-8 items-center rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700">{event.type}</span>}
+
+    <div class="mt-auto grid grid-cols-3 divide-x divide-slate-200 pt-6">
+      <div class="min-w-0 px-1.5">
+        <span class="block text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">Başlangıç</span>
+        <strong class="mt-1 block truncate text-sm font-semibold text-slate-800">{startLabel}</strong>
+      </div>
+      <div class="min-w-0 px-1.5">
+        <span class="block text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">Bitiş</span>
+        <strong class="mt-1 block truncate text-sm font-semibold text-slate-800">{endLabel}</strong>
+      </div>
+      <div class="min-w-0 px-1.5">
+        <span class="block text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">{isOnline ? 'Katılım' : 'Konum'}</span>
+        <strong class="mt-1 block truncate text-sm font-semibold text-slate-800" title={locationLabel}>{locationLabel}</strong>
+      </div>
     </div>
 
-    <div class="flex min-w-0 grow flex-col">
-      <h3 class="line-clamp-2 text-[17px] font-extrabold leading-snug text-gray-900 transition-colors group-hover:text-primary-700">
-        <a href={href} class="outline-none after:absolute after:inset-0 after:content-['']">{event.title}</a>
-      </h3>
-      {
-        !hideCompany && (
-          <div class="mt-2.5 flex min-w-0 items-center gap-2">
-            <CompanyLogo name={event.company.name} src={event.company.logoUrl} size="xs" />
-            <span class="truncate text-sm font-semibold text-gray-500">{event.company.name}</span>
-          </div>
-        )
-      }
-      <p class="mt-auto flex items-center gap-1.5 pt-4 text-sm font-semibold text-gray-700">
-        <Clock size={15} className="shrink-0 text-primary-500" aria-hidden="true" />
-        <span class="sr-only">Tarih:</span>
-        {start ? date.label.replace(/ · \d{2}:\d{2}$/, '') + ` · ${formatTime(start)}` : date.label}
-      </p>
-    </div>
-  </div>
-
-  <!-- Katılım şekli ve konum -->
-  <div class="flex items-center gap-2 border-t border-gray-100 px-5 py-3.5 text-xs">
-    <span class:list={['flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 font-bold', isOnline ? 'bg-teal-50 text-teal-700' : 'bg-amber-50 text-amber-700']}>
-      {isOnline ? <Globe size={13} aria-hidden="true" /> : <Tent size={13} aria-hidden="true" />}
-      {isOnline ? 'Online' : (event.locationType ?? 'Yüz yüze')}
-    </span>
-    {
-      hasLocation && (
-        <span class="flex min-w-0 items-center gap-1 font-medium text-gray-500" title={locationLabel}>
-          <MapPin size={14} className="shrink-0" aria-hidden="true" />
-          <span class="truncate">{locationLabel}</span>
-        </span>
-      )
-    }
+    <a href={href} class="relative z-20 mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-5 text-sm font-semibold text-white shadow-lg shadow-primary-600/20 transition hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/25">
+      Etkinliği incele
+      <ArrowUpRight size={17} aria-hidden="true" />
+    </a>
   </div>
 </article>

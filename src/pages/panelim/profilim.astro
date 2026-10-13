@@ -28,8 +28,10 @@ const returnTo = rawReturn ? safeRedirect(rawReturn) : null;
       <ErrorNotice title="Profil bilgilerin yüklenemedi" />
     ) : (
       <div class="space-y-6">
-        {completeness && <CompletenessCard completeness={completeness} showLink={false} />}
-        <MediaUploads client:visible name={profile.fullName} avatarUrl={profile.avatarUrl} resumeUrl={profile.resumeUrl} />
+        <div class:list={['grid gap-5', completeness && 'xl:grid-cols-[0.8fr_1.2fr]']}>
+          {completeness && <CompletenessCard completeness={completeness} showLink={false} />}
+          <MediaUploads client:visible name={profile.fullName} avatarUrl={profile.avatarUrl} resumeUrl={profile.resumeUrl} />
+        </div>
         <ProfileDetailsForm client:load profile={profile} returnTo={returnTo} />
         <ChangePasswordForm client:visible />
       </div>

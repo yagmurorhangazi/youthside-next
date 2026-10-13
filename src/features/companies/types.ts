@@ -8,7 +8,7 @@ import type { Paginated } from '@/shared/api/pagination';
 
 export type OrganizationType = 'company' | 'club';
 
-export type SocialPlatform = 'linkedin' | 'twitter' | 'facebook' | 'instagram' | 'youtube';
+export type SocialPlatform = 'linkedin' | 'twitter' | 'facebook' | 'instagram' | 'youtube' | 'tiktok';
 
 export interface SocialLink {
   readonly platform: SocialPlatform;
@@ -45,6 +45,8 @@ export interface CompanyProfile extends Omit<CompanySummary, 'about' | 'jobsCoun
   readonly aboutText: string;
   readonly website: string | null;
   readonly addresses: readonly CompanyAddress[];
+  /** Pasif şirket/kulüp vitrinde gösterilmez (get_by_slug `is_active`). */
+  readonly isActive: boolean;
 }
 
 export interface CultureBlock {
@@ -59,7 +61,10 @@ export interface CultureBlock {
 export interface Award {
   readonly id: string;
   readonly title: string;
+  /** HTML'siz metin (kart önizlemesi). */
   readonly description: string | null;
+  /** Temizlenmiş zengin metin (detay penceresi). */
+  readonly contentHtml: string;
   readonly imageUrl: string | null;
   readonly year: number | null;
   readonly givenBy: string | null;

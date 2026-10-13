@@ -2,25 +2,28 @@
 /**
  * [MODÜL: KİMLİK DOĞRULAMA SAYFA ŞABLONU]
  * Amaç: Giriş, kayıt ve şifre sayfalarının ortak, odaklı tam ekran düzeni.
- *   - Sol (lg+): ekran yüksekliğinde sabit marka paneli
- *   - Sağ: üstte logo / ana sayfa linki, ortada form, altta yasal linkler
+ *   - Sol (lg+): ekran yüksekliğinde sabit marka ve fayda paneli
+ *   - Sağ: tüm ekranlarda tutarlı, odaklı form kartı
  *
  * Tasarım kararları:
  *   - Site menüsü ve footer gizlenir (`chrome="minimal"`): kullanıcı formu tamamlarken dikkat dağılmaz.
- *   - Form kart içine alınmaz; beyaz zeminde ortalanır (kart içinde kart görüntüsü yok).
- *   - Sütunlar tam genişliktir; geniş ekranda kenarlarda boşluk/kopukluk oluşmaz.
+ *   - Giriş/kayıt geçişi formun üstünde görünür; kullanıcı hangi akışta olduğunu kaybetmez.
+ *   - Kart genişliği uzun satırları engeller, arka plan ise geniş ekrandaki boşluğu dengeler.
  */
 import { ArrowLeft, CalendarCheck, CheckCircle2, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 import { ROUTES, SITE } from '@/config/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import SocialAuthOptions from './SocialAuthOptions.astro';
 
 interface Props {
   title: string;
   heading: string;
   subheading?: string;
+  /** Yalnızca giriş/kayıt sayfalarında, backend hazır olana dek pasif sosyal seçenekleri gösterir. */
+  socialIntent?: 'login' | 'register';
 }
 
-const { title, heading, subheading } = Astro.props;
+const { title, heading, subheading, socialIntent } = Astro.props;
 
 const benefits = [
   { icon: Zap, text: 'Tek profille staj ve iş ilanlarına hızlı başvuru' },
@@ -28,75 +31,138 @@ const benefits = [
   { icon: CalendarCheck, text: 'Zirve, eğitim ve kariyer etkinliklerine ücretsiz katılım' },
   { icon: CheckCircle2, text: 'Tüm başvurularını tek panelden takip et' },
 ];
+const authTabs = [
+  { intent: 'login', label: 'Giriş yap', href: ROUTES.login },
+  { intent: 'register', label: 'Kayıt ol', href: ROUTES.register },
+] as const;
 const year = new Date().getFullYear();
 ---
 
 <BaseLayout title={title} noindex chrome="minimal">
-  <div class="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+  <div class="grid min-h-dvh bg-slate-50 lg:grid-cols-[minmax(26rem,0.9fr)_minmax(36rem,1.1fr)]">
     <!-- Marka paneli (yalnızca masaüstü) -->
     <aside class="relative hidden bg-gray-950 text-white lg:block">
-      <div class="sticky top-0 flex h-dvh flex-col justify-between overflow-hidden p-10 xl:p-14">
+      <div class="sticky top-0 flex h-dvh flex-col justify-between overflow-hidden p-10 xl:p-14 2xl:p-16">
         <!-- Dekoratif katmanlar -->
-        <div class="pointer-events-none absolute -left-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-primary-600/20 blur-3xl" aria-hidden="true"></div>
+        <div class="pointer-events-none absolute -left-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-primary-600/25 blur-3xl" aria-hidden="true"></div>
         <div class="pointer-events-none absolute -bottom-40 -right-24 h-[26rem] w-[26rem] rounded-full bg-purple-600/20 blur-3xl" aria-hidden="true"></div>
+        <div class="pointer-events-none absolute -right-28 top-1/3 h-64 w-64 rounded-full border border-white/10" aria-hidden="true"></div>
+        <div class="pointer-events-none absolute -right-16 top-[38%] h-40 w-40 rounded-full border border-white/10" aria-hidden="true"></div>
         <div
           class="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:24px_24px] [mask-image:linear-gradient(to_bottom,black,transparent)]"
           aria-hidden="true"
         >
         </div>
 
-        <a href={ROUTES.home} class="relative w-fit" aria-label={`${SITE.name} ana sayfa`}>
-          <img src={SITE.logoWhite} alt={SITE.name} class="h-auto w-36" />
-        </a>
+        <div class="relative flex items-center justify-between gap-4">
+          <a href={ROUTES.home} class="w-fit" aria-label={`${SITE.name} ana sayfa`}>
+            <img src={SITE.logoWhite} alt={SITE.name} class="h-auto w-36" />
+          </a>
+          <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-gray-300">
+            Kariyer ağı
+          </span>
+        </div>
 
         <div class="relative">
-          <p class="max-w-md text-4xl font-black leading-[1.1] tracking-tight xl:text-5xl">
-            Fırsatları keşfet,<br /><span class="text-primary-400">geleceğini şekillendir.</span>
+          <p class="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-primary-300">Kariyer yolculuğun burada</p>
+          <p class="max-w-md text-4xl font-black leading-[1.08] tracking-[-0.04em] xl:text-5xl">
+            Doğru fırsatla<br /><span class="text-primary-400">doğru zamanda</span> buluş.
           </p>
-          <ul class="mt-10 max-w-md space-y-5">
+          <p class="mt-5 max-w-md text-[15px] leading-7 text-slate-400">
+            Öğrenciler ve yeni mezunlar için ilanları, etkinlikleri ve kariyer bağlantılarını tek profilde bir araya getir.
+          </p>
+          <ul class="mt-8 max-w-md space-y-4">
             {
               benefits.map(({ icon: Icon, text }) => (
-                <li class="flex items-center gap-4">
-                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-primary-300 ring-1 ring-white/10">
-                    <Icon size={19} aria-hidden="true" />
+                <li class="flex items-center gap-3.5">
+                  <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-primary-300 ring-1 ring-white/10">
+                    <Icon size={17} aria-hidden="true" />
                   </span>
-                  <span class="text-[15px] font-medium text-gray-300">{text}</span>
+                  <span class="text-sm font-medium text-gray-300">{text}</span>
                 </li>
               ))
             }
           </ul>
         </div>
 
-        <p class="relative flex items-center gap-2 text-xs font-medium text-gray-500">
-          <ShieldCheck size={15} aria-hidden="true" />
-          Bilgilerin KVKK kapsamında güvenle korunur.
-        </p>
+        <div class="relative flex items-center justify-between gap-4 border-t border-white/10 pt-5 text-xs font-medium text-gray-500">
+          <p class="flex items-center gap-2">
+            <ShieldCheck size={15} aria-hidden="true" />
+            Bilgilerin KVKK kapsamında korunur.
+          </p>
+          <span>Keşfet · Başvur · Takip et</span>
+        </div>
       </div>
     </aside>
 
     <!-- Form sütunu -->
-    <div class="flex min-h-dvh flex-col bg-white">
-      <header class="flex items-center justify-between gap-4 px-5 py-5 sm:px-10 sm:py-6">
+    <div class="relative flex min-h-dvh min-w-0 flex-col overflow-hidden bg-slate-50">
+      <div
+        class="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_top_right,var(--color-primary-100),transparent_58%)] opacity-80"
+        aria-hidden="true"
+      >
+      </div>
+      <div class="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-purple-100/40 blur-3xl" aria-hidden="true"></div>
+
+      <header class="relative flex items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:px-10 lg:py-6 xl:px-14">
         <a href={ROUTES.home} class="lg:invisible" aria-label={`${SITE.name} ana sayfa`}>
           <img src={SITE.logo} alt={SITE.name} class="h-auto w-28" />
         </a>
-        <a href={ROUTES.home} class="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-gray-900">
-          <ArrowLeft size={16} aria-hidden="true" />
-          Ana sayfa
+        <a href={ROUTES.home} class="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200/80 bg-white/90 px-3.5 text-sm font-bold text-slate-600 shadow-sm backdrop-blur transition hover:border-primary-200 hover:text-primary-700">
+          <ArrowLeft size={17} strokeWidth={2.25} aria-hidden="true" />
+          <span class="hidden min-[390px]:inline">Ana sayfa</span>
         </a>
       </header>
 
-      <div class="flex flex-1 items-start justify-center px-5 pb-12 pt-4 sm:items-center sm:px-10 sm:pt-0">
-        <div class="w-full max-w-[420px]">
-          <h1 class="text-[28px] font-black leading-tight tracking-tight text-gray-900 sm:text-[32px]">{heading}</h1>
-          {subheading && <p class="mt-2 text-[15px] leading-6 text-gray-500">{subheading}</p>}
-          <div class="mt-8">
-            <slot />
-          </div>
-        </div>
-      </div>
+      <main class="relative flex flex-1 items-start justify-center px-3 pb-6 pt-1 sm:px-8 sm:pb-10 sm:pt-4 lg:items-center lg:px-10 lg:py-10">
+        <div class="w-full max-w-[460px]">
+          <section class="rounded-[1.75rem] border border-slate-200/80 bg-white p-4 shadow-lift sm:p-7" aria-labelledby="auth-heading">
+            {
+              socialIntent && (
+                <nav aria-label="Hesap işlemleri" class="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
+                  {authTabs.map((tab) => {
+                    const active = tab.intent === socialIntent;
+                    return (
+                      <a
+                        href={tab.href}
+                        aria-current={active ? 'page' : undefined}
+                        class:list={[
+                          'flex min-h-10 items-center justify-center rounded-lg px-3 text-sm font-bold transition',
+                          active ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/70' : 'text-slate-500 hover:text-slate-800',
+                        ]}
+                      >
+                        {tab.label}
+                      </a>
+                    );
+                  })}
+                </nav>
+              )
+            }
 
-      <footer class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-gray-100 px-5 py-5 text-xs text-gray-400 sm:justify-between sm:px-10">
+            <div class="flex items-start gap-3">
+              <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700" aria-hidden="true">
+                <Sparkles size={17} strokeWidth={2.25} />
+              </div>
+              <div>
+                <h1 id="auth-heading" class="text-[26px] font-black leading-tight tracking-[-0.035em] text-slate-950 sm:text-[30px]">{heading}</h1>
+                {subheading && <p class="mt-1.5 text-sm leading-5 text-slate-500">{subheading}</p>}
+              </div>
+            </div>
+
+            <div class="mt-5">
+            {socialIntent && <SocialAuthOptions intent={socialIntent} />}
+            <slot />
+            </div>
+          </section>
+
+          <p class="mt-4 flex items-center justify-center gap-2 text-center text-xs font-medium text-slate-400">
+            <ShieldCheck size={14} aria-hidden="true" />
+            Kişisel bilgilerin güvenle korunur.
+          </p>
+        </div>
+      </main>
+
+      <footer class="relative flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-5 py-4 text-xs text-slate-400 sm:justify-between sm:px-8 lg:px-10 xl:px-14">
         <span>© {year} {SITE.name}</span>
         <nav aria-label="Yasal" class="flex gap-5">
           <a href={ROUTES.agreements('hizmet-sozlesmesi')} class="hover:text-gray-700">Kullanım koşulları</a>

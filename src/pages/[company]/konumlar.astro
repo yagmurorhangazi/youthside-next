@@ -1,0 +1,115 @@
+---
+/**
+ * [SAYFA: PROFİL — KONUMLAR SEKMESİ]
+ * URL: /{slug}/konumlar?konum=N · Referans: youthside-2026-ui (yeni-is-veren-header) → sirket-profili/konumlar/index.php
+ * Veri: companies/get_by_slug → addresses[] (profil yükleyicisinden gelir; ek istek yok).
+ *
+ * Neden sunucu tarafı seçim: Konum seçimi `?konum=N` (0 tabanlı) bağlantısıyla yapılır; JS gerekmez, bağlantı
+ * paylaşılabilir ve klavyeyle doğal çalışır. Canonical sorgu parametresini içermez (kopya içerik oluşmaz).
+ * Harita veya adres metni eksik olan konumlar da hatasız gösterilir. Hiç adres yoksa sekme gizlidir ve
+ * doğrudan gelen ziyaretçi referanstaki gibi genel bakışa yönlendirilir (boş sayfa indekslenmez).
+ */
+import { MapPin, MapPinOff, Navigation } from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import LocationMap from '@/features/companies/components/LocationMap.astro';
+import ProfileLayout from '@/features/companies/components/ProfileLayout.astro';
+import { directionsUrl, LOCATION_DETAIL_ID, locationHref, locationLabel, selectedLocationIndex } from '@/features/companies/lib/locations';
+import { loadProfileContext } from '@/features/companies/lib/profile-loader';
+
+const slug = Astro.params.company ?? '';
+const context = await loadProfileContext(Astro.locals.services, slug);
+if (!context) return Astro.rewrite('/404');
+
+const { profile } = context;
+const addresses = profile.addresses;
+if (addresses.length === 0) return Astro.redirect(ROUTES.company(slug));
+
+const selectedIndex = selectedLocationIndex(Astro.url.searchParams, addresses.length);
+const selected = addresses[selectedIndex];
+const selectedLabel = locationLabel(selected, selectedIndex);
+const directions = directionsUrl(selected);
+const organization = profile.type === 'club' ? 'Kulüp' : 'Şirket';
+---
+
+<ProfileLayout
+  context={context}
+  active="locations"
+  title="Konumları"
+  description={`${profile.name} ofis ve çalışma lokasyonlarını, açık adreslerini ve harita bilgilerini inceleyin.`}
+>
+  <div class="grid gap-6 lg:grid-cols-3 lg:gap-8">
+    <!-- Konum listesi: tek konumda gereksiz olduğu için gösterilmez -->
+    {addresses.length > 1 && (
+      <nav aria-labelledby="locations-title" class="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:p-5 lg:self-start">
+        <div class="mb-3 flex items-baseline justify-between gap-3 px-2">
+          <h2 id="locations-title" class="font-bold text-gray-900">{organization} konumları</h2>
+          <span class="text-sm text-gray-500">{addresses.length} konum</span>
+        </div>
+        <ul class="space-y-2">
+          {addresses.map((address, index) => {
+            const isSelected = index === selectedIndex;
+            return (
+              <li>
+                <a
+                  href={locationHref(slug, index)}
+                  aria-current={isSelected ? 'true' : undefined}
+                  class:list={[
+                    'flex min-h-11 items-start gap-3 rounded-2xl border p-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+                    isSelected ? 'border-primary-200 bg-primary-50' : 'border-transparent hover:border-gray-200 hover:bg-gray-50',
+                  ]}
+                >
+                  <MapPin size={18} className={isSelected ? 'mt-0.5 shrink-0 text-primary-600' : 'mt-0.5 shrink-0 text-gray-400'} aria-hidden="true" />
+                  <span class="min-w-0">
+                    <span class:list={['block text-sm font-bold', isSelected ? 'text-primary-700' : 'text-gray-900']}>{locationLabel(address, index)}</span>
+                    {address.address && <span class="mt-0.5 line-clamp-2 block text-xs text-gray-500">{address.address}</span>}
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    )}
+
+    <!-- Seçili konum -->
+    <section
+      id={LOCATION_DETAIL_ID}
+      aria-labelledby="location-detail-title"
+      class:list={['scroll-mt-24 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm', addresses.length > 1 ? 'lg:col-span-2' : 'lg:col-span-3']}
+    >
+      {selected.mapEmbedUrl ? (
+        <LocationMap src={selected.mapEmbedUrl} title={`${profile.name} — ${selectedLabel} haritası`} class="h-72 sm:h-96" />
+      ) : (
+        <div class="flex h-48 flex-col items-center justify-center gap-2 bg-gray-50 text-gray-400">
+          <MapPinOff size={32} aria-hidden="true" />
+          <p class="text-sm">Bu konum için harita eklenmemiş.</p>
+        </div>
+      )}
+      <div class="flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-8">
+        <div class="min-w-0">
+          <h2 id="location-detail-title" class="text-xl font-bold text-gray-900 sm:text-2xl">{selectedLabel}</h2>
+          {selected.address ? (
+            <p class="mt-2 flex items-start gap-2 text-sm text-gray-600">
+              <MapPin size={16} className="mt-0.5 shrink-0 text-primary-500" aria-hidden="true" />
+              <span class="break-words">{selected.address}</span>
+            </p>
+          ) : (
+            <p class="mt-2 text-sm text-gray-500">Açık adres bilgisi eklenmemiş.</p>
+          )}
+        </div>
+        {directions && (
+          <a
+            href={directions}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${selectedLabel} için yol tarifi al (Google Haritalar, yeni sekmede açılır)`}
+            class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gray-900 px-5 text-sm font-bold text-white transition hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+          >
+            <Navigation size={16} aria-hidden="true" />
+            Yol tarifi al
+          </a>
+        )}
+      </div>
+    </section>
+  </div>
+</ProfileLayout>

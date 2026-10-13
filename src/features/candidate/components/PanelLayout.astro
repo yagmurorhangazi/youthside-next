@@ -27,23 +27,21 @@ const isActive = (href: string) => (href === ROUTES.dashboard ? path === href ||
 ---
 
 <BaseLayout title={title} noindex muted>
-  <div class="relative overflow-hidden">
-    <div class="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-primary-50/70 to-transparent" aria-hidden="true"></div>
-    <Container class="relative py-6 md:py-10">
-    <div class="grid gap-6 lg:grid-cols-[272px_1fr] lg:gap-8">
+  <div class="min-w-0 bg-slate-50/70">
+    <Container class="py-6 md:py-10">
+    <div class="grid items-start gap-6 lg:grid-cols-[232px_minmax(0,1fr)] lg:gap-8">
       <!-- Kenar menüsü -->
-      <aside class="lg:sticky lg:top-24 lg:self-start">
-        <div class="hidden overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-[0_16px_45px_rgb(15_23_42/0.06)] lg:block">
-          <div class="h-1.5 bg-gradient-to-r from-primary-700 via-primary-500 to-amber-400" aria-hidden="true"></div>
-          <div class="flex items-center gap-3 border-b border-gray-100 p-5">
+      <aside class="lg:self-start">
+        <div class="hidden border-r border-slate-200 pr-5 lg:block">
+          <div class="flex items-center gap-3 px-2 pb-5">
             <UserAvatar name={user.name} src={user.avatarUrl} size="lg" online />
             <div class="min-w-0">
-              <p class="mb-0.5 text-[10px] font-extrabold uppercase tracking-wider text-primary-600">Aday hesabı</p>
-              <p class="truncate font-bold text-gray-900">{user.name}</p>
-              <p class="truncate text-xs text-gray-500">{user.email}</p>
+              <p class="truncate text-sm font-semibold text-slate-950">{user.name}</p>
+              <p class="mt-0.5 truncate text-[11px] text-slate-400">{user.email}</p>
             </div>
           </div>
-          <nav aria-label="Panel menüsü" class="p-4">
+          <nav aria-label="Panel menüsü">
+            <p class="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-400">Hesabım</p>
             <ul class="space-y-1">
               {
                 ACCOUNT_NAV.map(({ label, href, icon: Icon }) => (
@@ -52,21 +50,23 @@ const isActive = (href: string) => (href === ROUTES.dashboard ? path === href ||
                       href={href}
                       aria-current={isActive(href) ? 'page' : undefined}
                       class:list={[
-                        'flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
-                        isActive(href) ? 'bg-primary-700 text-white shadow-lg shadow-primary-700/10' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                        'group flex min-h-11 items-center gap-3 rounded-xl px-2.5 text-sm font-medium transition',
+                        isActive(href) ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/70' : 'text-slate-500 hover:bg-white/70 hover:text-slate-950',
                       ]}
                     >
-                      <Icon size={18} aria-hidden="true" />
-                      {label}
+                      <span class:list={['flex h-7 w-7 items-center justify-center rounded-lg transition', isActive(href) ? 'bg-primary-50 text-primary-700' : 'text-slate-400 group-hover:text-primary-700']}>
+                        <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                      </span>
+                      <span class="flex-1">{label}</span>
                     </a>
                   </li>
                 ))
               }
             </ul>
           </nav>
-          <form method="post" action={ROUTES.logout} class="border-t border-gray-100 p-4">
-            <button type="submit" class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50">
-              <LogOut size={18} aria-hidden="true" />
+          <form method="post" action={ROUTES.logout} class="mt-5 border-t border-slate-200 pt-3">
+            <button type="submit" class="flex min-h-10 w-full items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-red-500 transition hover:bg-red-50">
+              <span class="flex h-7 w-7 items-center justify-center"><LogOut size={16} aria-hidden="true" /></span>
               Çıkış yap
             </button>
           </form>
@@ -74,7 +74,7 @@ const isActive = (href: string) => (href === ROUTES.dashboard ? path === href ||
 
         <!-- Mobil sekme menüsü -->
         <nav aria-label="Panel menüsü" class="-mx-4 lg:hidden">
-          <ul class="scrollbar-none flex gap-2 overflow-x-auto px-4">
+          <ul class="scrollbar-none flex gap-2 overflow-x-auto px-4 pb-1">
             {
               ACCOUNT_NAV.map(({ label, href, icon: Icon }) => (
                 <li class="shrink-0">
@@ -82,8 +82,8 @@ const isActive = (href: string) => (href === ROUTES.dashboard ? path === href ||
                     href={href}
                     aria-current={isActive(href) ? 'page' : undefined}
                     class:list={[
-                      'flex h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold shadow-sm',
-                      isActive(href) ? 'border-primary-700 bg-primary-700 text-white' : 'border-gray-200 bg-white text-gray-700',
+                      'flex h-10 items-center gap-2 rounded-xl border px-3.5 text-sm font-medium transition',
+                      isActive(href) ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-600',
                     ]}
                   >
                     <Icon size={16} aria-hidden="true" />
@@ -98,10 +98,9 @@ const isActive = (href: string) => (href === ROUTES.dashboard ? path === href ||
 
       <!-- İçerik -->
       <div class="min-w-0">
-        <header class="mb-6 rounded-[24px] border border-white/80 bg-white/85 px-5 py-5 shadow-card backdrop-blur-sm sm:px-6">
-          <p class="mb-1.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary-600">Aday paneli</p>
-          <h1 class="text-2xl font-black tracking-tight text-gray-900 md:text-3xl">{heading}</h1>
-          {description && <p class="mt-1.5 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base">{description}</p>}
+        <header class="mb-7 border-b border-slate-200 pb-5">
+          <h1 class="text-2xl font-extrabold tracking-[-0.025em] text-slate-950 md:text-3xl">{heading}</h1>
+          {description && <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p>}
         </header>
         <slot />
       </div>

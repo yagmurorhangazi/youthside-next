@@ -16,6 +16,6 @@ if (Astro.locals.user) return Astro.redirect(redirect, 302);
 const notice = params.get('sifirlandi') === '1' ? 'Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.' : undefined;
 ---
 
-<AuthLayout title="Giriş Yap" heading="Tekrar hoş geldin" subheading="Başvurularını ve etkinliklerini takip etmek için giriş yap.">
+<AuthLayout title="Giriş Yap" heading="Tekrar hoş geldin" subheading="Başvurularını ve etkinliklerini takip etmek için giriş yap." socialIntent="login">
   <LoginForm client:load redirect={redirect} initialEmail={params.get('email')?.slice(0, 255) ?? ''} notice={notice} />
 </AuthLayout>

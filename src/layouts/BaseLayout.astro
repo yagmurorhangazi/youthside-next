@@ -10,6 +10,7 @@
 import '@/styles/global.css';
 import { SITE } from '@/config/site';
 import CookieConsent from '@/components/layout/CookieConsent';
+import MobileBottomNav from '@/components/layout/MobileBottomNav.astro';
 import SiteFooter from '@/components/layout/SiteFooter.astro';
 import SiteHeader from '@/components/layout/SiteHeader.astro';
 
@@ -104,6 +105,7 @@ const user = Astro.locals.user;
     </main>
 
     {chrome === 'full' && <SiteFooter />}
+    {chrome === 'full' && <MobileBottomNav user={user} />}
     <CookieConsent client:idle />
   </body>
 </html>

@@ -31,6 +31,14 @@
   --color-primary-800: #c33a0a;
   --color-primary-900: #922b08;
 
+  /* ── Sağlayıcı Marka Renkleri ──
+     Sosyal giriş ikonları SVG olsa da renkler yine tek tasarım kaynağından gelir. */
+  --color-google-blue: #4285f4;
+  --color-google-red: #ea4335;
+  --color-google-yellow: #fbbc05;
+  --color-google-green: #34a853;
+  --color-linkedin: #0a66c2;
+
   /* ── Yüzey & Metin ── */
   --color-background-light: #fdfdfd;
   --color-surface-light: #ffffff;
@@ -162,6 +170,59 @@
    sınıfıyla tutarlı görünür. Kullanım: <div class="prose-ys" set:html={...} /> */
 @utility prose-ys {
   @apply prose prose-gray max-w-none break-words prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-primary-700 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-img:rounded-2xl prose-li:my-1 prose-p:leading-relaxed;
+}
+
+/* ── Quill 2 çıktısı (şirket "Hakkımızda") ──
+   Neden: Editör görsel/videoya konum sınıfları (quill-resize-module), paragraflara hizalama sınıfı ekler
+   ve madde işaretli listeyi <ol><li data-list="bullet"> olarak yazar. Sınıflar sanitizeAboutHtml'de
+   beyaz listededir. Editörde verilen genişlik üst sınır olarak korunur (max-width + height:auto).
+   Kullanım: <div class="prose-ys prose-quill" set:html={...} /> */
+@utility prose-quill {
+  display: flow-root;
+
+  & :where(img, video) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-2xl);
+  }
+  & video {
+    background: var(--color-black);
+  }
+  & .ql-resize-style-left {
+    float: left;
+    margin: 0 1em 1em 0;
+  }
+  & .ql-resize-style-right {
+    float: right;
+    margin: 0 0 1em 1em;
+  }
+  & .ql-resize-style-center {
+    display: block;
+    margin-inline: auto;
+  }
+  & .ql-resize-style-full {
+    width: 100% !important;
+  }
+  & .ql-align-center {
+    text-align: center;
+  }
+  & .ql-align-right {
+    text-align: right;
+  }
+  & .ql-align-justify {
+    text-align: justify;
+  }
+  & ol > li[data-list='bullet'] {
+    list-style-type: disc;
+  }
+
+  /* Dar ekranda yüzen medya metni sıkıştırmasın: tam genişliğe düşer */
+  @media (width < 40rem) {
+    & :where(.ql-resize-style-left, .ql-resize-style-right) {
+      float: none;
+      margin: 1em 0;
+    }
+  }
 }
 
 /* Yatay kaydırılan şeritlerde (sekme, filtre çipi) kaydırma çubuğunu gizle */

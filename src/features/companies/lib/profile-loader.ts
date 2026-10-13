@@ -12,18 +12,25 @@ import { createSafeLoader } from '@/core/safe';
 import type { Award, CompanyProfile, GalleryItem } from '../types';
 
 /** Profil sayfasındaki sekmeler. */
-export type ProfileTab = 'overview' | 'jobs' | 'events' | 'awards' | 'photos';
+export type ProfileTab = 'overview' | 'jobs' | 'events' | 'awards' | 'photos' | 'locations';
 
 export interface ProfileContext {
   readonly profile: CompanyProfile;
   readonly awards: Award[];
   readonly gallery: GalleryItem[];
-  readonly counts: { readonly jobs: number; readonly events: number; readonly awards: number; readonly photos: number };
+  readonly counts: {
+    readonly jobs: number;
+    readonly events: number;
+    readonly awards: number;
+    readonly photos: number;
+    readonly locations: number;
+  };
 }
 
 export async function loadProfileContext(services: Services, slug: string): Promise<ProfileContext | null> {
   const profile = await services.companies.getBySlug(slug);
-  if (!profile) return null;
+  // Pasif şirket/kulüp profili bulunamamış gibi davranır → 404 (referans: 9253aff, `c.is_active = 1`).
+  if (!profile || !profile.isActive) return null;
 
   const safe = createSafeLoader(`PROFIL:${slug}`);
   const isClub = profile.type === 'club';
@@ -44,6 +51,8 @@ export async function loadProfileContext(services: Services, slug: string): Prom
       events: events?.total ?? 0,
       awards: awards?.length ?? 0,
       photos: gallery?.length ?? 0,
+      // Adresler get_by_slug yanıtında gelir; ek istek gerekmez.
+      locations: profile.addresses.length,
     },
   };
 }

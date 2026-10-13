@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type SubmitEvent } from 'react';
-import { ArrowUpDown, Briefcase, Check, Globe, History, House, MapPin, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowUpDown, Briefcase, Check, Globe, History, House, ListFilter, MapPin, Search, SlidersHorizontal, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { buildHref, type ParamState } from '@/shared/lib/search-params';
 import { Popover, PopoverHeader, SelectMenu, ToolbarButton } from '@/shared/ui';
@@ -246,7 +246,7 @@ export default function FilterBar({ basePath, searchPlaceholder, groups, sorts =
   return (
     <div className={isNavigating ? 'pointer-events-none opacity-70 transition-opacity' : ''} aria-busy={isNavigating}>
       {/* Arama */}
-      <form onSubmit={onSubmit} role="search" className="flex gap-2 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-1.5 transition focus-within:border-primary-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-primary-500/10">
+      <form onSubmit={onSubmit} role="search" className="flex gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lift transition focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-500/10 sm:rounded-full">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">{searchPlaceholder}</span>
           <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
@@ -256,16 +256,30 @@ export default function FilterBar({ basePath, searchPlaceholder, groups, sorts =
             onChange={(event) => setQ(event.target.value)}
             placeholder={searchPlaceholder}
             enterKeyHint="search"
-            className="h-12 w-full rounded-xl bg-transparent pl-11 pr-3 text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            className="h-12 w-full rounded-xl bg-transparent pl-11 pr-3 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none sm:rounded-full"
           />
         </label>
-        <button type="submit" className="h-12 shrink-0 rounded-xl bg-primary-700 px-5 text-sm font-bold text-white shadow-lg shadow-primary-700/10 transition hover:bg-primary-800 sm:px-7">
+        <button type="submit" className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary-700 px-5 text-sm font-semibold text-white shadow-lg shadow-primary-700/15 transition hover:bg-primary-800 sm:rounded-full sm:px-8">
+          <Search size={16} aria-hidden="true" />
           Ara
         </button>
       </form>
 
-      {/* Filtreler + sıralama */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      {/* Sonuç özeti + filtreler + sıralama aynı araç satırında tutulur. */}
+      <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/80 p-2 shadow-sm backdrop-blur-sm">
+        <div className="mr-1 flex min-h-10 items-center gap-2 rounded-xl bg-slate-50/80 px-3 text-sm text-slate-600" aria-live="polite">
+          <ListFilter size={16} className="text-primary-600" aria-hidden="true" />
+          <p>
+            <strong className="font-bold text-slate-950">{total.toLocaleString('tr-TR')}</strong> {resultNoun} bulundu
+            {initial.q && (
+              <>
+                {' '}
+                · “<span className="font-semibold text-slate-900">{initial.q}</span>”
+              </>
+            )}
+          </p>
+        </div>
+
         {groups.length > 0 && (
           <ToolbarButton
             ref={filterTriggerRef}
@@ -316,35 +330,26 @@ export default function FilterBar({ basePath, searchPlaceholder, groups, sorts =
         )}
       </div>
 
-      {/* Sonuç sayısı ve aktif filtre çipleri */}
-      <div className="mt-4 flex flex-wrap items-center gap-2" aria-live="polite">
-        <p className="mr-1 text-sm text-gray-600">
-          <strong className="font-bold text-gray-900">{total.toLocaleString('tr-TR')}</strong> {resultNoun}
-          {initial.q && (
-            <>
-              {' '}
-              · “<span className="font-semibold text-gray-900">{initial.q}</span>” için
-            </>
-          )}
-        </p>
-        {chips.map((chip) => (
-          <button
-            key={`${chip.key}:${chip.value}`}
-            type="button"
-            onClick={() => navigate({ values: { ...applied, [chip.key]: applied[chip.key].filter((item) => item !== chip.value) } })}
-            className="flex min-h-9 items-center gap-1 rounded-full border border-primary-100 bg-primary-50 pl-3 pr-2 text-xs font-bold text-primary-700 transition hover:border-primary-200 hover:bg-primary-100"
-            aria-label={`${chip.value} filtresini kaldır`}
-          >
-            {chip.value}
-            <X size={14} aria-hidden="true" />
-          </button>
-        ))}
-        {(chips.length > 0 || initial.q || initial.toggle) && (
+      {/* Aktif filtre çipleri yalnızca gerçekten seçim olduğunda ek satır açar. */}
+      {(chips.length > 0 || initial.q || initial.toggle) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+          {chips.map((chip) => (
+            <button
+              key={`${chip.key}:${chip.value}`}
+              type="button"
+              onClick={() => navigate({ values: { ...applied, [chip.key]: applied[chip.key].filter((item) => item !== chip.value) } })}
+              className="flex min-h-9 items-center gap-1 rounded-full border border-primary-100 bg-primary-50 pl-3 pr-2 text-xs font-bold text-primary-700 transition hover:border-primary-200 hover:bg-primary-100"
+              aria-label={`${chip.value} filtresini kaldır`}
+            >
+              {chip.value}
+              <X size={14} aria-hidden="true" />
+            </button>
+          ))}
           <a href={basePath} className="text-xs font-bold text-primary-600 underline-offset-2 hover:underline">
             Tümünü temizle
           </a>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Mobil filtre paneli */}
       {sheetOpen && (

@@ -9,9 +9,10 @@
 
 import { useId, useState, type FormEvent } from 'react';
 import { actions } from 'astro:actions';
-import { Mail, ShieldCheck } from 'lucide-react';
+import { LogIn, Mail, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '@/config/site';
-import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
+import { NO_ERRORS, toFormErrors, withFieldError, type FormErrorState } from '@/shared/lib/action-result';
+import { emailIssue } from '@/shared/lib/email';
 import { Button, FormAlert, FormField, Input, PasswordInput } from '@/shared/ui';
 
 interface LoginFormProps {
@@ -29,6 +30,10 @@ export default function LoginForm({ redirect, initialEmail = '', notice }: Login
   const [step, setStep] = useState<Step>('credentials');
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
+  // Alanlar ilk yüklemede salt okunur kalarak tarayıcının kayıtlı hesabı kendiliğinden
+  // doldurmasını önler; kullanıcı odaklandığında normal şekilde yazılabilir olur.
+  const [emailEditable, setEmailEditable] = useState(Boolean(initialEmail));
+  const [passwordEditable, setPasswordEditable] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [errors, setErrors] = useState<FormErrorState>(NO_ERRORS);
   const [unverified, setUnverified] = useState(false);
@@ -73,9 +78,11 @@ export default function LoginForm({ redirect, initialEmail = '', notice }: Login
   };
 
   const id = (name: string) => `${uid}-${name}`;
+  // Alandan çıkınca uyar (Türkçe karakter vb.); boş alan için gönderimde sunucu uyarır.
+  const checkEmail = (value: string) => setErrors((prev) => withFieldError(prev, 'email', value.trim() ? emailIssue(value) : null));
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-5">
+    <form onSubmit={onSubmit} autoComplete="off" noValidate className="space-y-4">
       {info && <FormAlert variant="success">{info}</FormAlert>}
       {errors.message && <FormAlert>{errors.message}</FormAlert>}
       {unverified && (
@@ -89,31 +96,41 @@ export default function LoginForm({ redirect, initialEmail = '', notice }: Login
 
       {step === 'credentials' ? (
         <>
-          <FormField id={id('email')} label="E-posta" error={errors.fields.email}>
+          <FormField id={id('email')} label="E-posta" required error={errors.fields.email}>
             {(a11y) => (
               <Input
                 id={id('email')}
                 type="email"
                 inputMode="email"
-                autoComplete="email"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
                 icon={Mail}
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                readOnly={!emailEditable}
+                onFocus={() => setEmailEditable(true)}
+                onPointerDown={() => setEmailEditable(true)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  if (errors.fields.email) checkEmail(event.target.value);
+                }}
+                onBlur={(event) => checkEmail(event.target.value)}
                 required
-                autoFocus={!initialEmail}
                 {...a11y}
               />
             )}
           </FormField>
-          <FormField id={id('password')} label="Şifre" error={errors.fields.password}>
+          <FormField id={id('password')} label="Şifre" required error={errors.fields.password}>
             {(a11y) => (
               <PasswordInput
                 id={id('password')}
-                autoComplete="current-password"
+                autoComplete="off"
                 value={password}
+                readOnly={!passwordEditable}
+                onFocus={() => setPasswordEditable(true)}
+                onPointerDown={() => setPasswordEditable(true)}
                 onChange={(event) => setPassword(event.target.value)}
                 required
-                autoFocus={Boolean(initialEmail)}
                 {...a11y}
               />
             )}
@@ -152,7 +169,7 @@ export default function LoginForm({ redirect, initialEmail = '', notice }: Login
         </>
       )}
 
-      <Button type="submit" isLoading={pending} className="w-full">
+      <Button type="submit" icon={LogIn} isLoading={pending} className="w-full shadow-lg shadow-primary-700/15">
         {step === 'otp' ? 'Doğrula ve giriş yap' : 'Giriş yap'}
       </Button>
 

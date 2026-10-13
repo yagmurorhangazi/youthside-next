@@ -8,7 +8,7 @@
  */
 import { ArrowUpRight, Briefcase, CalendarClock, House, MapPin, Sparkles } from 'lucide-react';
 import { ROUTES } from '@/config/site';
-import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
+import OrganizationAttribution from '@/shared/ui/OrganizationAttribution.astro';
 import { getDeadlineInfo, type DeadlineTone } from '../lib/deadline';
 import type { JobSummary } from '../types';
 
@@ -24,6 +24,7 @@ const { job, hideCompany = false, eager = false } = Astro.props;
 const deadline = getDeadlineInfo(job.expirationDate);
 const location = job.locations.length > 0 ? job.locations.join(', ') : 'Lokasyon belirtilmemiş';
 const href = ROUTES.jobDetail(job.company.slug, job.slug);
+const companyHref = ROUTES.company(job.company.slug);
 
 /** Aciliyet seviyesinin renk karşılığı (görünüm kararı kartta, iş kuralı lib'de). */
 const toneClass: Record<DeadlineTone, string> = {
@@ -35,9 +36,9 @@ const toneClass: Record<DeadlineTone, string> = {
 };
 ---
 
-<article class="group relative flex h-full flex-col overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-card card-interactive focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-500/10">
+<article class="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-card card-interactive focus-within:border-primary-300 focus-within:ring-4 focus-within:ring-primary-500/10">
   <!-- Kapak -->
-  <div class="relative aspect-[2/1] w-full overflow-hidden bg-linear-to-br from-primary-100 via-orange-50 to-purple-100">
+  <div class="relative mx-3 mt-3 aspect-video overflow-hidden rounded-[20px] bg-linear-to-br from-primary-100 via-orange-50 to-purple-100">
     {
       job.coverImageUrl ? (
         <img
@@ -62,26 +63,24 @@ const toneClass: Record<DeadlineTone, string> = {
         </span>
       )
     }
-    <!-- Konumlandırma sarmalayıcıda: CompanyLogo kendi içinde `relative` kullanır -->
-    <div class="absolute -bottom-6 left-4 z-10">
-      <CompanyLogo name={job.company.name} src={job.company.logoUrl} />
-    </div>
   </div>
 
-  <!-- İçerik -->
-  <div class="flex grow flex-col px-5 pb-5 pt-10 sm:px-6 sm:pb-6">
-    {
-      !hideCompany && (
-        <p class="mb-2 truncate text-xs font-bold uppercase tracking-wider text-primary-600">{job.company.name}</p>
-      )
-    }
-    <h3 class="line-clamp-2 text-lg font-extrabold leading-snug text-gray-900 transition-colors group-hover:text-primary-700 sm:text-xl">
-      <!-- Tüm kart tıklanabilir: link başlıkta, ::after ile kartı kaplar (erişilebilir kart deseni) -->
-      <a href={href} class="outline-none after:absolute after:inset-0 after:content-['']" aria-label={`${job.title} ilanını incele`}>{job.title}</a>
-    </h3>
-    {job.excerpt && <p class="mt-3 line-clamp-2 text-sm leading-6 text-gray-500">{job.excerpt}</p>}
+  {
+    !hideCompany && (
+      <div class="relative -mt-8 px-4">
+        <OrganizationAttribution name={job.company.name} logoUrl={job.company.logoUrl} href={companyHref} label="İlanı yayınlayan" />
+      </div>
+    )
+  }
 
-    <div class="mt-5 flex flex-wrap gap-2">
+  <!-- İçerik -->
+  <div class:list={['flex grow flex-col px-5 pb-5 text-center sm:px-6 sm:pb-6', hideCompany ? 'pt-5' : 'pt-4']}>
+    <h3 class="line-clamp-2 text-xl font-extrabold leading-snug tracking-[-0.02em] text-slate-950 transition-colors group-hover:text-primary-700">
+      {job.title}
+    </h3>
+    {job.excerpt && <p class="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{job.excerpt}</p>}
+
+    <div class="mt-4 flex flex-wrap justify-center gap-2">
       {
         job.type && (
           <span class="flex items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5 text-[11px] font-bold text-blue-700">
@@ -100,21 +99,27 @@ const toneClass: Record<DeadlineTone, string> = {
       }
     </div>
 
-    <!-- Alt bilgi: en önemli iki karar bilgisi ve kartın devam ettiğini anlatan yönlendirme. -->
-    <div class="mt-auto pt-6">
-      <div class="flex items-center gap-3 border-t border-gray-100 pt-4 text-xs">
-        <span class="flex min-w-0 flex-1 items-center gap-1.5 font-semibold text-gray-500">
-          <MapPin size={15} className="shrink-0 text-primary-500" aria-hidden="true" />
-          <span class="truncate">{location}</span>
+    <!-- Karar bilgileri ve açık aksiyon, referanstaki hiyerarşiyi Youthside diline taşır. -->
+    <div class="mt-auto grid grid-cols-2 divide-x divide-slate-200 pt-6">
+      <div class="min-w-0 px-2">
+        <span class="flex items-center justify-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+          <MapPin size={12} aria-hidden="true" />
+          Konum
         </span>
-        <span class:list={['flex shrink-0 items-center gap-1.5 font-semibold', toneClass[deadline.tone]]} title="Son başvuru tarihi">
-          <CalendarClock size={15} aria-hidden="true" />
-          {deadline.label}
+        <strong class="mt-1 block truncate text-sm font-semibold text-slate-800" title={location}>{location}</strong>
+      </div>
+      <div class="min-w-0 px-2">
+        <span class="flex items-center justify-center gap-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+          <CalendarClock size={12} aria-hidden="true" />
+          Son başvuru
         </span>
-        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-900 text-white transition-colors group-hover:bg-primary-700" aria-hidden="true">
-          <ArrowUpRight size={17} />
-        </span>
+        <strong class:list={['mt-1 block truncate text-sm font-semibold', toneClass[deadline.tone]]}>{deadline.label}</strong>
       </div>
     </div>
+
+    <a href={href} class="relative z-20 mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary-600 px-5 text-sm font-semibold text-white shadow-lg shadow-primary-600/20 transition hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/25">
+      İlanı incele
+      <ArrowUpRight size={17} aria-hidden="true" />
+    </a>
   </div>
 </article>

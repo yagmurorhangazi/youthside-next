@@ -28,43 +28,46 @@ const jobHref = (job: JobSummary) => ROUTES.jobDetail(job.company.slug, job.slug
 const tagsOf = (job: JobSummary) => [job.type, job.workModel, job.category].filter((tag): tag is string => Boolean(tag)).slice(0, 3);
 ---
 
-<section class="hero relative overflow-hidden pb-20 pt-12 sm:pt-16 lg:pb-28 lg:pt-20">
+<section class="hero relative overflow-hidden pb-14 pt-8 sm:pb-20 sm:pt-14 lg:pb-28 lg:pt-20">
   <!-- Dekoratif arka plan katmanları -->
   <div class="aurora aurora-1" aria-hidden="true"></div>
   <div class="aurora aurora-2" aria-hidden="true"></div>
   <div class="aurora aurora-3" aria-hidden="true"></div>
   <div class="dot-grid" aria-hidden="true"></div>
 
-  <div class="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8">
+  <div class="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 sm:gap-12 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8">
     <!-- Sol: Metin & CTA -->
     <div class="text-center lg:text-left">
-      <h1 class="mb-6 text-5xl font-black leading-[0.95] tracking-tighter text-gray-900 sm:text-7xl lg:text-[5.5rem] xl:text-[6.25rem]">
+      <h1 class="mb-4 text-[2.65rem] font-black leading-[0.94] tracking-[-0.055em] text-gray-900 sm:mb-6 sm:text-7xl lg:text-[5.5rem] xl:text-[6.25rem]">
         Geleceğini<br />
         <span class="gradient-text">Tasarla.</span>
       </h1>
 
-      <p class="mx-auto mb-10 max-w-lg text-lg leading-relaxed text-gray-500 md:text-xl lg:mx-0">
+      <p class="mx-auto mb-7 max-w-lg text-[15px] leading-7 text-gray-500 sm:mb-10 sm:text-lg md:text-xl lg:mx-0">
         Türkiye'nin en yenilikçi şirketlerindeki staj, iş ve etkinlik fırsatlarını tek platformda keşfet. Tek tıkla başvur.
       </p>
 
-      <div class="mb-12 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-        <a href={isLoggedIn ? ROUTES.jobs : ROUTES.register} class="btn-hero-primary group">
+      <div class="mb-8 grid gap-2.5 sm:mb-12 sm:flex sm:justify-center sm:gap-3 lg:justify-start">
+        <a href={isLoggedIn ? ROUTES.jobs : ROUTES.register} class="btn-hero-primary group w-full sm:w-auto">
           {isLoggedIn ? 'İlanları Keşfet' : 'Hemen Üye Ol'}
           <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </a>
-        <a href={isLoggedIn ? ROUTES.dashboard : ROUTES.jobs} class="btn-hero-ghost">{isLoggedIn ? 'Panelime Git' : 'İlanları Keşfet'}</a>
+        <a href={isLoggedIn ? ROUTES.dashboard : ROUTES.jobs} class="btn-hero-ghost w-full sm:w-auto">{isLoggedIn ? 'Panelime Git' : 'İlanları Keşfet'}</a>
       </div>
 
-      <dl class="flex items-center justify-center gap-6 sm:gap-8 lg:justify-start">
+      <dl class="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:justify-center sm:gap-0 lg:justify-start">
         {
           stats.map((stat, index) => (
-            <>
-              {index > 0 && <div class="stat-sep" aria-hidden="true" />}
-              <div class="flex flex-col-reverse text-center lg:text-left">
-                <dt class="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">{stat.label}</dt>
-                <dd class="text-2xl font-black text-gray-900 lg:text-3xl">{stat.value}</dd>
-              </div>
-            </>
+            <div
+              class:list={[
+                'flex min-w-0 flex-col-reverse justify-end rounded-2xl border border-white/70 bg-white/55 px-2 py-3 text-center shadow-sm sm:rounded-none sm:border-0 sm:bg-transparent sm:px-8 sm:py-0 sm:shadow-none lg:text-left',
+                index > 0 && 'sm:border-l sm:border-slate-200/80',
+                index === 0 && 'sm:pl-0',
+              ]}
+            >
+              <dt class="mt-1 line-clamp-2 text-[9px] font-bold uppercase leading-3 tracking-wide text-gray-400 sm:text-xs">{stat.label}</dt>
+              <dd class="text-xl font-black text-gray-900 sm:text-2xl lg:text-3xl">{stat.value}</dd>
+            </div>
           ))
         }
       </dl>
@@ -73,7 +76,7 @@ const tagsOf = (job: JobSummary) => [job.type, job.workModel, job.category].filt
     <!-- Sağ: Öneri vitrini -->
     {
       featured && (
-        <div class="relative mx-auto w-full max-w-sm py-8 lg:py-10">
+        <div class="relative mx-auto w-full max-w-sm py-1 sm:py-6 lg:py-10">
           <div class="absolute inset-0 scale-90 rounded-[3rem] bg-linear-to-br from-primary-300/25 via-orange-200/15 to-purple-300/15 blur-3xl" aria-hidden="true" />
 
           <div class="mockup relative">
@@ -107,7 +110,7 @@ const tagsOf = (job: JobSummary) => [job.type, job.workModel, job.category].filt
                 </a>
               </li>
               {others.map((job) => (
-                <li>
+                <li class="hidden lg:list-item">
                   <a href={jobHref(job)} class="job-row group flex items-center gap-3">
                     <CompanyLogo name={job.company.name} src={job.company.logoUrl} size="sm" />
                     <div class="min-w-0 flex-1">
@@ -129,13 +132,13 @@ const tagsOf = (job: JobSummary) => [job.type, job.workModel, job.category].filt
           </div>
 
           <!-- Dekoratif bildirimler -->
-          <div class="notif float-down absolute -top-2 right-0 z-20 sm:-right-10" aria-hidden="true">
+          <div class="notif float-down absolute -top-2 right-0 z-20 hidden lg:flex lg:-right-10" aria-hidden="true">
             <span class="flex h-8 w-8 items-center justify-center rounded-full border border-green-100 bg-green-50 text-green-500">
               <CircleCheck size={16} />
             </span>
             <p class="text-[13px] font-bold text-gray-900">Tek tıkla başvuru</p>
           </div>
-          <div class="notif float-up absolute -bottom-2 left-0 z-20 sm:-left-10" aria-hidden="true">
+          <div class="notif float-up absolute -bottom-2 left-0 z-20 hidden lg:flex lg:-left-10" aria-hidden="true">
             <span class="flex h-8 w-8 items-center justify-center rounded-full border border-primary-100 bg-primary-50 text-primary-600">
               <Sparkles size={16} />
             </span>
@@ -312,7 +315,6 @@ const tagsOf = (job: JobSummary) => [job.type, job.workModel, job.category].filt
   }
 
   .notif {
-    display: flex;
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
@@ -322,6 +324,48 @@ const tagsOf = (job: JobSummary) => [job.type, job.workModel, job.category].filt
     border-radius: 16px;
     box-shadow: 0 4px 12px rgb(0 0 0 / 0.08), 0 12px 32px rgb(0 0 0 / 0.1);
   }
+
+  /* Telefonda hero ilk ekranda tamamlanır; kart ve aksiyonlar masaüstü oranlarını taşımaz. */
+  @media (max-width: 639px) {
+    .aurora {
+      filter: blur(76px);
+      opacity: 0.34;
+    }
+    .aurora-1 {
+      width: 320px;
+      height: 320px;
+      top: -110px;
+      left: -140px;
+    }
+    .aurora-2 {
+      width: 280px;
+      height: 280px;
+      right: -170px;
+    }
+    .aurora-3 {
+      width: 240px;
+      height: 240px;
+      left: 20%;
+    }
+    .dot-grid {
+      background-size: 20px 20px;
+      opacity: 0.65;
+    }
+    .btn-hero-primary,
+    .btn-hero-ghost {
+      min-height: 48px;
+      padding-inline: 20px;
+      border-radius: 16px;
+    }
+    .mockup {
+      padding: 16px;
+      border-radius: 24px;
+    }
+    .featured-card {
+      padding: 16px;
+    }
+  }
+
   .float-up {
     animation: float-up 8s ease-in-out infinite;
   }

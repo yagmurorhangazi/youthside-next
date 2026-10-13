@@ -1,0 +1,50 @@
+---
+/**
+ * [MODÜL: PROFİL SOSYAL MEDYA BAĞLANTILARI]
+ * Amaç: Şirket/kulüp sosyal hesaplarını profil header'ında ve bilgi kartında aynı biçimde göstermek (DRY).
+ * Referans: youthside-2026-ui (yeni-is-veren-header) → _profile-header.php / _sidebar.php `$socialPlatforms`
+ *
+ * Erişilebilirlik: Görsel daire küçüktür (referans tasarım) ama tıklama alanı 44px'tir (dokunma hedefi).
+ */
+import SocialIcon from '@/components/layout/SocialIcon.astro';
+import type { CompanyProfile } from '../types';
+import { SOCIAL_PLATFORM_LABELS } from '../lib/social-platforms';
+
+interface Props {
+  socials: CompanyProfile['socials'];
+  companyName: string;
+  /** Beyaz zemin üzerinde gri (header) veya renkli zemin üzerinde yarı saydam beyaz (bilgi kartı). */
+  tone?: 'plain' | 'tinted';
+  class?: string;
+}
+
+const { socials, companyName, tone = 'plain', class: className } = Astro.props;
+---
+
+{
+  socials.length > 0 && (
+    <ul class:list={['-m-1.5 flex flex-wrap items-center', className]}>
+      {socials.map((social) => (
+        <li>
+          <a
+            href={social.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${companyName} ${SOCIAL_PLATFORM_LABELS[social.platform]} (yeni sekmede açılır)`}
+            title={SOCIAL_PLATFORM_LABELS[social.platform]}
+            class="group flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+          >
+            <span
+              class:list={[
+                'flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors group-hover:text-primary-600',
+                tone === 'tinted' ? 'bg-white/70 shadow-sm group-hover:bg-white' : 'bg-gray-50 group-hover:bg-primary-50',
+              ]}
+            >
+              <SocialIcon platform={social.platform} class="h-3.5 w-3.5" />
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}

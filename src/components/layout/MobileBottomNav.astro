@@ -1,0 +1,100 @@
+---
+/**
+ * [MODÜL: MOBİL ALT NAVİGASYON]
+ * Amaç: Telefonda en sık kullanılan bölümlere başparmak erişiminde, sürekli görünür bağlantılar sunmak.
+ * Neden: Üstteki çekmece ayrıntılı gezinme için korunurken bu bar günlük geçişleri tek dokunuşa indirir.
+ * Erişilebilirlik: Beş eşit dokunma hedefi, aktif sayfa bildirimi ve iPhone güvenli alan desteği sağlar.
+ */
+import {
+  BriefcaseBusiness,
+  Building2,
+  CalendarCheck,
+  CalendarDays,
+  FileText,
+  Home,
+  LayoutDashboard,
+  LogIn,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react';
+import { ROUTES } from '@/config/site';
+import type { SessionUser } from '@/features/auth/types';
+import { isPathActive } from '@/shared/ui';
+
+interface Props {
+  user: SessionUser | null;
+}
+
+interface BottomNavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  exact?: boolean;
+  /** Detay rotaları ana dizinden farklı olduğunda aktif sekmeyi korur. */
+  aliases?: readonly string[];
+}
+
+const { user } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const guestItems: readonly BottomNavItem[] = [
+  { label: 'Ana sayfa', href: ROUTES.home, icon: Home, exact: true },
+  { label: 'İlanlar', href: ROUTES.jobs, icon: BriefcaseBusiness, aliases: ['/ilan/', '/ilanlar'] },
+  { label: 'Etkinlikler', href: ROUTES.events, icon: CalendarDays, aliases: ['/etkinlik/', '/etkinlikler'] },
+  { label: 'Şirketler', href: ROUTES.companies, icon: Building2 },
+  { label: 'Giriş', href: ROUTES.login, icon: LogIn },
+];
+
+const accountItems: readonly BottomNavItem[] = [
+  { label: 'Ana sayfa', href: ROUTES.home, icon: Home, exact: true },
+  { label: 'Başvurular', href: ROUTES.myApplications, icon: FileText },
+  { label: 'Panelim', href: ROUTES.dashboard, icon: LayoutDashboard, exact: true },
+  { label: 'Etkinlikler', href: ROUTES.myEvents, icon: CalendarCheck },
+  { label: 'Profilim', href: ROUTES.profile, icon: UserRound },
+];
+
+const items = user ? accountItems : guestItems;
+
+const isItemActive = (item: BottomNavItem): boolean => {
+  if (item.exact) return currentPath === item.href;
+  if (isPathActive(item.href, currentPath)) return true;
+  return item.aliases?.some((alias) => currentPath.includes(alias)) ?? false;
+};
+---
+
+<!-- Sabit bar son içeriği örtmesin; bu boşluk yalnızca mobil/tablette ayrılır. -->
+<div class="h-[calc(5.25rem+env(safe-area-inset-bottom))] lg:hidden" aria-hidden="true"></div>
+
+<nav
+  aria-label="Mobil hızlı navigasyon"
+  class="pointer-events-none fixed inset-x-0 bottom-0 z-70 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden"
+  style="view-transition-name: mobile-bottom-nav"
+>
+  <div class="pointer-events-auto mx-auto max-w-lg rounded-[1.65rem] border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_-12px_40px_-24px_var(--color-slate-950)] backdrop-blur-xl">
+    <ul class="grid grid-cols-5 gap-1">
+      {
+        items.map((item) => {
+          const active = isItemActive(item);
+          const Icon = item.icon;
+          return (
+            <li class="min-w-0">
+              <a
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                class:list={[
+                  'flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-[1.15rem] px-1 text-[10px] font-semibold leading-none transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
+                  active
+                    ? 'bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-100'
+                    : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700 active:scale-95',
+                ]}
+              >
+                <Icon size={20} strokeWidth={active ? 2.35 : 2} aria-hidden="true" />
+                <span class="max-w-full truncate">{item.label}</span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</nav>

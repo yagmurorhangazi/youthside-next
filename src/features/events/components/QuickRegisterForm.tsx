@@ -15,8 +15,9 @@ import { ROUTES } from '@/config/site';
 import { allRequiredAccepted, ContractChecklist } from '@/features/common/components/ContractChecklist';
 import type { Contract } from '@/features/common/types';
 import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
+import { capitalizePersonName } from '@/shared/lib/text';
 import { useEducationOptions } from '@/features/lookups/useEducationOptions';
-import { Button, FormField, Input, Select } from '@/shared/ui';
+import { Button, FormField, Input, NameInput, Select } from '@/shared/ui';
 
 interface QuickRegisterFormProps {
   readonly eventId: string;
@@ -47,8 +48,8 @@ export function QuickRegisterForm({ eventId, contracts, onSuccess, onAlreadyRegi
     setErrors(NO_ERRORS);
     const { data, error } = await actions.participation.quickRegister({
       eventId,
-      firstName: text('firstName'),
-      lastName: text('lastName'),
+      firstName: capitalizePersonName(text('firstName')),
+      lastName: capitalizePersonName(text('lastName')),
       email: text('email'),
       phone: text('phone'),
       university: text('university'),
@@ -72,10 +73,10 @@ export function QuickRegisterForm({ eventId, contracts, onSuccess, onAlreadyRegi
     <form onSubmit={onSubmit} noValidate className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField id={field('firstName')} label="Ad" required error={err('firstName')}>
-          {(a11y) => <Input id={field('firstName')} name="firstName" autoComplete="given-name" required {...a11y} />}
+          {(a11y) => <NameInput id={field('firstName')} name="firstName" autoComplete="given-name" required {...a11y} />}
         </FormField>
         <FormField id={field('lastName')} label="Soyad" required error={err('lastName')}>
-          {(a11y) => <Input id={field('lastName')} name="lastName" autoComplete="family-name" required {...a11y} />}
+          {(a11y) => <NameInput id={field('lastName')} name="lastName" autoComplete="family-name" required {...a11y} />}
         </FormField>
       </div>
       <FormField id={field('email')} label="E-posta" required error={err('email')}>

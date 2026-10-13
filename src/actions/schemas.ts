@@ -5,12 +5,15 @@
  */
 
 import { z } from 'astro/zod';
+import { EMAIL_MESSAGES, hasNonAsciiCharacters } from '@/shared/lib/email';
 
+/** Türkçe karakterli adreste genel "geçersiz" yerine nedeni söylenir (bkz. shared/lib/email). */
 export const emailSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .pipe(z.email({ error: 'Geçerli bir e-posta adresi gir.' }).max(255));
+  .refine((value) => !hasNonAsciiCharacters(value), { error: EMAIL_MESSAGES.nonAscii, abort: true })
+  .pipe(z.email({ error: EMAIL_MESSAGES.invalid }).max(255));
 
 /** API en az 8 karakter istiyor (auth/reset-password). */
 export const passwordSchema = z.string().min(8, 'Şifre en az 8 karakter olmalı.').max(128);

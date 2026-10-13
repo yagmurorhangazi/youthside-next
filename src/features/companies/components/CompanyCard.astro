@@ -4,7 +4,7 @@
  * Amaç: Liste sayfalarında şirket veya kulübü kapak, logo, sektör/üniversite ve açık
  *       fırsat sayılarıyla göstermek. Kulüplerde ilan sayısı yerine üniversite gösterilir.
  */
-import { BadgeCheck, Briefcase, CalendarDays, GraduationCap, Users } from 'lucide-react';
+import { ArrowUpRight, BadgeCheck, BriefcaseBusiness, Building2, CalendarDays, GraduationCap, Users } from 'lucide-react';
 import { ROUTES } from '@/config/site';
 import CompanyLogo from '@/shared/ui/CompanyLogo.astro';
 import type { CompanySummary } from '../types';
@@ -18,50 +18,66 @@ const isClub = company.type === 'club';
 const subtitle = isClub ? company.university : company.sector;
 ---
 
-<article class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm card-interactive">
-  <div class="relative h-28 bg-linear-to-br from-gray-800 via-gray-700 to-primary-800 sm:h-32">
-    {company.coverImageUrl && <img src={company.coverImageUrl} alt="" loading="lazy" decoding="async" class="h-full w-full object-cover opacity-90 media-zoom" />}
+<article class="group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-card card-interactive">
+  <div class="relative aspect-[16/6] overflow-hidden bg-linear-to-br from-slate-950 via-slate-800 to-primary-900">
+    {company.coverImageUrl ? (
+      <img src={company.coverImageUrl} alt="" loading="lazy" decoding="async" class="h-full w-full object-cover opacity-90 media-zoom" />
+    ) : (
+      <Building2 size={52} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/15" strokeWidth={1.25} aria-hidden="true" />
+    )}
+    <div class="absolute inset-0 bg-linear-to-t from-slate-950/35 to-transparent" aria-hidden="true"></div>
+    {company.isVerified && (
+      <span class="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black text-blue-600 shadow-sm backdrop-blur">
+        <BadgeCheck size={13} aria-hidden="true" /> Onaylı
+      </span>
+    )}
     <div class="absolute -bottom-7 left-5 z-10">
-      <CompanyLogo name={company.name} src={company.logoUrl} />
+      <CompanyLogo name={company.name} src={company.logoUrl} class="ring-4 ring-white" />
     </div>
   </div>
 
   <div class="flex grow flex-col p-5 pt-10">
-    <h3 class="flex items-center gap-1.5 text-lg font-bold leading-snug text-gray-900 transition-colors group-hover:text-primary-600">
+    <h3 class="flex items-center gap-1.5 text-lg font-extrabold leading-snug tracking-[-0.015em] text-slate-950 transition-colors group-hover:text-primary-700">
       <a href={ROUTES.company(company.slug)} class="line-clamp-2 after:absolute after:inset-0 after:content-['']">{company.name}</a>
-      {company.isVerified && <BadgeCheck size={18} className="shrink-0 text-blue-500" aria-label="Onaylı hesap" />}
     </h3>
     {
       subtitle && (
-        <p class="mt-1 flex items-center gap-1 text-sm font-medium text-gray-500">
-          {isClub ? <GraduationCap size={15} className="shrink-0" aria-hidden="true" /> : null}
+        <p class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-slate-500">
+          {isClub ? <GraduationCap size={15} className="shrink-0 text-primary-500" aria-hidden="true" /> : <Building2 size={15} className="shrink-0 text-primary-500" aria-hidden="true" />}
           <span class="truncate">{subtitle}</span>
         </p>
       )
     }
-    {company.about && <p class="mt-3 line-clamp-3 text-[13px] leading-relaxed text-gray-500">{company.about}</p>}
+    {company.about && <p class="mt-3 line-clamp-3 text-[13px] leading-relaxed text-slate-500">{company.about}</p>}
 
-    <div class="mt-auto flex flex-wrap gap-2 pt-4 text-xs font-bold">
+    <div class="mt-auto flex flex-wrap gap-2 pt-5 text-[11px] font-bold">
       {
         !isClub && (
-          <span class:list={['flex items-center gap-1 rounded-lg px-2.5 py-1.5', company.jobsCount > 0 ? 'bg-primary-50 text-primary-700' : 'bg-gray-100 text-gray-500']}>
-            <Briefcase size={14} aria-hidden="true" />
+          <span class:list={['flex min-h-8 items-center gap-1.5 rounded-lg px-2.5', company.jobsCount > 0 ? 'bg-primary-50 text-primary-700' : 'bg-slate-100 text-slate-500']}>
+            <BriefcaseBusiness size={14} aria-hidden="true" />
             {company.jobsCount} açık ilan
           </span>
         )
       }
-      <span class:list={['flex items-center gap-1 rounded-lg px-2.5 py-1.5', company.eventsCount > 0 ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-500']}>
+      <span class:list={['flex min-h-8 items-center gap-1.5 rounded-lg px-2.5', company.eventsCount > 0 ? 'bg-purple-50 text-purple-700' : 'bg-slate-100 text-slate-500']}>
         <CalendarDays size={14} aria-hidden="true" />
         {company.eventsCount} etkinlik
       </span>
       {
         !isClub && company.employeeRange && (
-          <span class="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-gray-600">
+          <span class="flex min-h-8 items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 text-slate-600">
             <Users size={14} aria-hidden="true" />
             {company.employeeRange}
           </span>
         )
       }
+    </div>
+
+    <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs font-bold text-slate-500">
+      <span>{isClub ? 'Kulübü incele' : 'Şirketi incele'}</span>
+      <span class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition group-hover:bg-primary-600 group-hover:text-white">
+        <ArrowUpRight size={15} aria-hidden="true" />
+      </span>
     </div>
   </div>
 </article>

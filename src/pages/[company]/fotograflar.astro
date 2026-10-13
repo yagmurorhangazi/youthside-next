@@ -4,7 +4,7 @@
  * URL: /{slug}/fotograflar · Referans: youthside-2026-ui/sirket-profili/fotograflar/index.php
  * Veri: companies/get_gallery_items (profil yükleyicisinden gelir).
  */
-import { Images } from 'lucide-react';
+import { Camera, Images } from 'lucide-react';
 import GalleryGrid from '@/features/companies/components/GalleryGrid';
 import ProfileLayout from '@/features/companies/components/ProfileLayout.astro';
 import { loadProfileContext } from '@/features/companies/lib/profile-loader';
@@ -20,7 +20,18 @@ if (!context) return Astro.rewrite('/404');
     context.gallery.length === 0 ? (
       <CardGrid isEmpty emptyIcon={Images} emptyTitle="Henüz fotoğraf eklenmemiş" />
     ) : (
-      <GalleryGrid client:visible images={context.gallery} companyName={context.profile.name} />
+      <section aria-labelledby="all-photos-title">
+        <div class="mb-6 flex items-center gap-3">
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary-700">
+            <Camera size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Fotoğraf arşivi · {context.gallery.length} kare</p>
+            <h2 id="all-photos-title" class="text-xl font-extrabold tracking-[-0.02em] text-slate-950 sm:text-2xl">{context.profile.name} galeri</h2>
+          </div>
+        </div>
+        <GalleryGrid client:visible images={context.gallery} companyName={context.profile.name} />
+      </section>
     )
   }
 </ProfileLayout>

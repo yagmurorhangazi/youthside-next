@@ -44,7 +44,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       <button
         ref={ref}
         type="button"
-        className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-full pl-3.5 pr-3 text-sm font-semibold transition-[background-color,color,box-shadow] duration-200 ease-smooth focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/25 active:scale-[0.98] ${tone} ${className}`}
+        className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-xl pl-3.5 pr-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-200 ease-smooth focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/25 active:scale-[0.98] ${tone} ${className}`}
         {...props}
       >
         {Icon && <Icon size={16} strokeWidth={2.25} className={active ? 'text-white/80' : 'text-gray-400'} aria-hidden="true" />}

@@ -53,7 +53,7 @@ export default function CookieConsent() {
       role="dialog"
       aria-live="polite"
       aria-label="Çerez tercihleri"
-      className="animate-slide-up fixed inset-x-4 bottom-4 z-80 rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl sm:inset-x-auto sm:right-6 sm:bottom-6 sm:max-w-sm"
+      className="animate-slide-up fixed inset-x-4 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 rounded-2xl border border-gray-100 bg-white p-5 shadow-2xl sm:inset-x-auto sm:right-6 sm:max-w-sm lg:bottom-6"
     >
       <div className="flex items-start gap-4">
         <div className="shrink-0 rounded-xl bg-primary-50 p-3 text-primary-600">

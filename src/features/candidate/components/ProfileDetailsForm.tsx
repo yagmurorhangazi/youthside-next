@@ -12,7 +12,8 @@ import { actions } from 'astro:actions';
 import { ArrowRight, GraduationCap, Link2, Save, UserRound } from 'lucide-react';
 import { useEducationOptions } from '@/features/lookups/useEducationOptions';
 import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
-import { Button, ButtonLink, FormAlert, FormField, Input, Select } from '@/shared/ui';
+import { capitalizePersonName } from '@/shared/lib/text';
+import { Button, ButtonLink, FormAlert, FormField, Input, NameInput, Select } from '@/shared/ui';
 import { GENDERS, type CandidateProfile } from '../types';
 
 interface ProfileDetailsFormProps {
@@ -24,14 +25,19 @@ interface ProfileDetailsFormProps {
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 16 }, (_, i) => String(CURRENT_YEAR + 6 - i));
 
-function Section({ icon: Icon, title, children }: { icon: typeof UserRound; title: string; children: React.ReactNode }) {
+function Section({ icon: Icon, title, description, children }: { icon: typeof UserRound; title: string; description: string; children: React.ReactNode }) {
   return (
-    <fieldset className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
+    <fieldset className="border-b border-slate-100 p-5 sm:p-6">
       <legend className="sr-only">{title}</legend>
-      <h2 className="mb-5 flex items-center gap-2 font-bold text-gray-900" aria-hidden="true">
-        <Icon size={18} className="text-primary-500" />
-        {title}
-      </h2>
+      <div className="mb-6 flex items-start gap-3" aria-hidden="true">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-primary-600">
+          <Icon size={18} />
+        </span>
+        <div>
+          <h2 className="font-semibold text-slate-950">{title}</h2>
+          <p className="mt-0.5 text-xs leading-5 text-slate-400">{description}</p>
+        </div>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">{children}</div>
     </fieldset>
   );
@@ -53,8 +59,8 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
     setErrors(NO_ERRORS);
     setResult(null);
     const { data, error } = await actions.profile.update({
-      firstName: text('firstName'),
-      lastName: text('lastName'),
+      firstName: capitalizePersonName(text('firstName')),
+      lastName: capitalizePersonName(text('lastName')),
       phone: text('phone'),
       gender: text('gender'),
       university: text('university'),
@@ -73,13 +79,13 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
   const err = (name: string) => errors.fields[name];
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-6">
-      <Section icon={UserRound} title="Kişisel bilgiler">
+    <form onSubmit={onSubmit} noValidate className="overflow-hidden rounded-[20px] border border-slate-200/70 bg-white shadow-card">
+      <Section icon={UserRound} title="Kişisel bilgiler" description="İletişim ve temel kimlik bilgilerini güncel tut.">
         <FormField id={id('firstName')} label="Ad" required error={err('firstName')}>
-          {(a11y) => <Input id={id('firstName')} name="firstName" defaultValue={profile.firstName} autoComplete="given-name" {...a11y} />}
+          {(a11y) => <NameInput id={id('firstName')} name="firstName" defaultValue={profile.firstName} autoComplete="given-name" {...a11y} />}
         </FormField>
         <FormField id={id('lastName')} label="Soyad" required error={err('lastName')}>
-          {(a11y) => <Input id={id('lastName')} name="lastName" defaultValue={profile.lastName} autoComplete="family-name" {...a11y} />}
+          {(a11y) => <NameInput id={id('lastName')} name="lastName" defaultValue={profile.lastName} autoComplete="family-name" {...a11y} />}
         </FormField>
         <FormField id={id('email')} label="E-posta" hint="E-posta adresi buradan değiştirilemez.">
           {(a11y) => <Input id={id('email')} value={profile.email} readOnly className="cursor-not-allowed text-gray-500" {...a11y} />}
@@ -100,7 +106,7 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
         </FormField>
       </Section>
 
-      <Section icon={GraduationCap} title="Eğitim bilgileri">
+      <Section icon={GraduationCap} title="Eğitim bilgileri" description="Sana uygun fırsatların eşleşmesi için eğitim durumunu ekle.">
         <FormField id={id('university')} label="Üniversite" error={err('university')} className="sm:col-span-2">
           {(a11y) => <Input id={id('university')} name="university" list={`${uid}-universities`} defaultValue={profile.university ?? ''} {...a11y} />}
         </FormField>
@@ -145,7 +151,7 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
         </datalist>
       </Section>
 
-      <Section icon={Link2} title="Bağlantılar">
+      <Section icon={Link2} title="Profesyonel bağlantılar" description="İşverenlerin çalışmalarını ve deneyimini daha yakından görmesini sağla.">
         <FormField id={id('linkedinUrl')} label="LinkedIn" error={err('linkedinUrl')}>
           {(a11y) => <Input id={id('linkedinUrl')} name="linkedinUrl" type="url" inputMode="url" defaultValue={profile.linkedinUrl ?? ''} placeholder="https://linkedin.com/in/…" {...a11y} />}
         </FormField>
@@ -154,20 +160,23 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
         </FormField>
       </Section>
 
-      {errors.message && <FormAlert>{errors.message}</FormAlert>}
+      {errors.message && <div className="px-5 pt-5 sm:px-6"><FormAlert>{errors.message}</FormAlert></div>}
       {result && (
-        <FormAlert variant="success" title="Profilin güncellendi">
-          Profil doluluk oranın şu an <strong>%{result.percentage}</strong>.
-          {returnTo && result.isEligible && (
-            <ButtonLink href={returnTo} size="sm" icon={ArrowRight} className="mt-3">
-              İlana geri dön ve başvur
-            </ButtonLink>
-          )}
-        </FormAlert>
+        <div className="px-5 pt-5 sm:px-6">
+          <FormAlert variant="success" title="Profilin güncellendi">
+            Profil doluluk oranın şu an <strong>%{result.percentage}</strong>.
+            {returnTo && result.isEligible && (
+              <ButtonLink href={returnTo} size="sm" icon={ArrowRight} className="mt-3">
+                İlana geri dön ve başvur
+              </ButtonLink>
+            )}
+          </FormAlert>
+        </div>
       )}
 
-      <div className="sticky bottom-4 z-10 flex justify-end">
-        <Button type="submit" icon={Save} isLoading={pending} className="w-full shadow-xl sm:w-auto">
+      <div className="flex items-center justify-between gap-4 bg-slate-50/70 p-4 sm:px-6">
+        <p className="hidden text-xs text-slate-500 sm:block">Değişikliklerini kaydederek profilini güncel tut.</p>
+        <Button type="submit" icon={Save} isLoading={pending} className="w-full sm:w-auto">
           Değişiklikleri kaydet
         </Button>
       </div>

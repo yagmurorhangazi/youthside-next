@@ -1,0 +1,19 @@
+---
+/**
+ * [MODÜL: KONUM HARİTASI]
+ * Amaç: Google Maps embed iframe'ini tek yerde, aynı güvenlik/performans öznitelikleriyle çizmek.
+ * Güvenlik: `src` yalnızca mapper'da beyaz listeden geçmiş `mapEmbedUrl` olabilir (extractMapEmbedUrl);
+ *           ham iframe HTML'i asla render edilmez.
+ * Kullanım: Genel bakış adres kartı ve Konumlar sekmesi.
+ */
+
+interface Props {
+  src: string;
+  title: string;
+  class?: string;
+}
+
+const { src, title, class: className } = Astro.props;
+---
+
+<iframe src={src} title={title} loading="lazy" referrerpolicy="no-referrer-when-downgrade" class:list={['w-full border-0', className]}></iframe>

@@ -1,0 +1,107 @@
+---
+/**
+ * [MODÜL: KURUM BİLGİ KARTI]
+ * Amaç: Şirket/kulüp profilindeki temel bilgileri ve sosyal hesapları genel bakış kenar çubuğunda toplamak.
+ * Neden: Profil başlığını kalabalıklaştırmadan sektör, çalışan sayısı ve web sitesi için taranabilir bir özet sunar.
+ * Referans: youthside-2026-ui şirket profili yan bilgi alanı; görsel dil Youthside tasarım sistemine uyarlanmıştır.
+ */
+import { Building2, ExternalLink, Globe2, GraduationCap, UsersRound, type LucideIcon } from 'lucide-react';
+import type { CompanyProfile } from '../types';
+import SocialLinks from './SocialLinks.astro';
+
+interface Props {
+  profile: Pick<CompanyProfile, 'name' | 'type' | 'sector' | 'employeeRange' | 'university' | 'website' | 'socials'>;
+}
+
+const { profile } = Astro.props;
+const isClub = profile.type === 'club';
+
+interface Fact {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+}
+
+const facts = (
+  isClub
+    ? [{ label: 'Üniversite', value: profile.university, icon: GraduationCap }]
+    : [
+        { label: 'Çalışan sayısı', value: profile.employeeRange, icon: UsersRound },
+        { label: 'Sektör', value: profile.sector, icon: Building2 },
+      ]
+).filter((fact): fact is Fact => !!fact.value);
+
+let websiteLabel = profile.website;
+if (profile.website) {
+  try {
+    websiteLabel = new URL(profile.website).hostname.replace(/^www\./, '');
+  } catch {
+    // API adresi tam URL değilse kullanıcıya gelen değeri bozmadan gösteririz.
+  }
+}
+
+const hasDetails = facts.length > 0 || !!profile.website || profile.socials.length > 0;
+---
+
+{
+  hasDetails && (
+    <section
+      class="relative overflow-hidden rounded-[1.65rem] border border-primary-100/80 bg-linear-to-br from-white via-primary-50/45 to-white p-5 shadow-card sm:p-6"
+      aria-labelledby="organization-info-title"
+    >
+      <div class="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-primary-100/60" aria-hidden="true" />
+      <div class="pointer-events-none absolute -right-3 top-20 h-16 w-16 rounded-full border border-primary-100/70" aria-hidden="true" />
+
+      <div class="relative">
+        <p class="mb-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-primary-600">Hızlı bakış</p>
+        <h2 id="organization-info-title" class="text-lg font-extrabold tracking-[-0.02em] text-slate-950">
+          {isClub ? 'Kulüp bilgileri' : 'Şirket bilgileri'}
+        </h2>
+
+        <dl class="mt-5 space-y-4">
+          {facts.map(({ label, value, icon: Icon }) => (
+            <div class="flex min-w-0 items-center gap-3.5">
+              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-sm ring-1 ring-slate-200/70">
+                <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <div class="min-w-0">
+                <dt class="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">{label}</dt>
+                <dd class="mt-0.5 break-words text-sm font-bold leading-snug text-slate-900">{value}</dd>
+              </div>
+            </div>
+          ))}
+
+          {profile.website && (
+            <div class="flex min-w-0 items-center gap-3.5">
+              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-sm ring-1 ring-slate-200/70">
+                <Globe2 size={19} strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <div class="min-w-0">
+                <dt class="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Web sitesi</dt>
+                <dd class="mt-0.5">
+                  <a
+                    href={profile.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="group/site inline-flex min-h-6 max-w-full items-center gap-1.5 break-all text-sm font-bold text-primary-700 hover:text-primary-800 hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                  >
+                    <span>{websiteLabel}</span>
+                    <ExternalLink size={13} className="shrink-0 transition-transform group-hover/site:-translate-y-0.5 group-hover/site:translate-x-0.5" aria-hidden="true" />
+                    <span class="sr-only">(yeni sekmede açılır)</span>
+                  </a>
+                </dd>
+              </div>
+            </div>
+          )}
+        </dl>
+
+        {profile.socials.length > 0 && (
+          <div class="mt-5 border-t border-primary-100/80 pt-3">
+            <p class="mb-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Sosyal medya</p>
+            <SocialLinks socials={profile.socials} companyName={profile.name} tone="tinted" />
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}

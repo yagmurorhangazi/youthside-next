@@ -7,10 +7,12 @@
 
 import { useId, useState, type SubmitEvent } from 'react';
 import { actions } from 'astro:actions';
-import { Check, Mail, MailCheck, ShieldCheck, User } from 'lucide-react';
+import { ArrowRight, Check, Mail, MailCheck, ShieldCheck, User } from 'lucide-react';
 import { ROUTES } from '@/config/site';
-import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
-import { Button, ButtonLink, FormAlert, FormField, Input, PasswordInput } from '@/shared/ui';
+import { NO_ERRORS, toFormErrors, withFieldError, type FormErrorState } from '@/shared/lib/action-result';
+import { emailIssue } from '@/shared/lib/email';
+import { capitalizePersonName } from '@/shared/lib/text';
+import { Button, ButtonLink, FormAlert, FormField, Input, NameInput, PasswordInput } from '@/shared/ui';
 
 interface RegisterFormProps {
   readonly redirect: string | null;
@@ -44,8 +46,8 @@ export default function RegisterForm({ redirect }: RegisterFormProps) {
     setPending(true);
     setErrors(NO_ERRORS);
     const { data, error } = await actions.auth.register({
-      firstName: text('firstName'),
-      lastName: text('lastName'),
+      firstName: capitalizePersonName(text('firstName')),
+      lastName: capitalizePersonName(text('lastName')),
       email: text('email'),
       password: text('password'),
       passwordConfirm: text('passwordConfirm'),
@@ -77,34 +79,52 @@ export default function RegisterForm({ redirect }: RegisterFormProps) {
 
   const id = (name: string) => `${uid}-${name}`;
   const score = passwordScore(password);
+  // Alandan çıkınca uyar (Türkçe karakter vb.); boş alan için gönderimde sunucu uyarır.
+  const checkEmail = (value: string) => setErrors((prev) => withFieldError(prev, 'email', value.trim() ? emailIssue(value) : null));
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-5">
+    <form onSubmit={onSubmit} noValidate className="space-y-4">
       {errors.message && <FormAlert>{errors.message}</FormAlert>}
 
-      <ol className="mb-6 grid grid-cols-2 gap-2" aria-label="Kayıt adımları">
-        <li className="flex min-h-11 items-center gap-2 rounded-xl bg-primary-50 px-3 text-xs font-bold text-primary-700">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-700 text-white">1</span>
-          Bilgilerini gir
+      <ol className="mb-5 flex items-center" aria-label="Kayıt adımları">
+        <li className="flex shrink-0 items-center gap-2 text-[11px] font-bold text-primary-700">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-700 text-[10px] text-white shadow-sm">1</span>
+          Bilgilerin
         </li>
-        <li className="flex min-h-11 items-center gap-2 rounded-xl bg-slate-50 px-3 text-xs font-bold text-slate-500">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm">2</span>
-          E-postanı doğrula
+        <li className="mx-3 h-px flex-1 bg-slate-200" aria-hidden="true"></li>
+        <li className="flex shrink-0 items-center gap-2 text-[11px] font-bold text-slate-400">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-[10px]">2</span>
+          E-posta onayı
         </li>
       </ol>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField id={id('firstName')} label="Ad" error={errors.fields.firstName}>
-          {(a11y) => <Input id={id('firstName')} name="firstName" autoComplete="given-name" icon={User} required autoFocus {...a11y} />}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <FormField id={id('firstName')} label="Ad" required error={errors.fields.firstName}>
+          {(a11y) => <NameInput id={id('firstName')} name="firstName" autoComplete="given-name" icon={User} required autoFocus {...a11y} />}
         </FormField>
-        <FormField id={id('lastName')} label="Soyad" error={errors.fields.lastName}>
-          {(a11y) => <Input id={id('lastName')} name="lastName" autoComplete="family-name" icon={User} required {...a11y} />}
+        <FormField id={id('lastName')} label="Soyad" required error={errors.fields.lastName}>
+          {(a11y) => <NameInput id={id('lastName')} name="lastName" autoComplete="family-name" icon={User} required {...a11y} />}
         </FormField>
       </div>
-      <FormField id={id('email')} label="E-posta" error={errors.fields.email}>
-        {(a11y) => <Input id={id('email')} name="email" type="email" inputMode="email" autoComplete="email" icon={Mail} required {...a11y} />}
+      <FormField id={id('email')} label="E-posta" required error={errors.fields.email}>
+        {(a11y) => (
+          <Input
+            id={id('email')}
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            icon={Mail}
+            onBlur={(event) => checkEmail(event.target.value)}
+            onChange={(event) => errors.fields.email && checkEmail(event.target.value)}
+            required
+            {...a11y}
+          />
+        )}
       </FormField>
-      <FormField id={id('password')} label="Şifre" hint="En az 8 karakter" error={errors.fields.password}>
+      <FormField id={id('password')} label="Şifre" hint="En az 8 karakter" required error={errors.fields.password}>
         {(a11y) => (
           <PasswordInput id={id('password')} name="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required {...a11y} />
         )}
@@ -119,12 +139,12 @@ export default function RegisterForm({ redirect }: RegisterFormProps) {
           <p className="mt-1.5 text-xs font-semibold text-gray-500">Şifre gücü: <span className="text-gray-700">{STRENGTH[score]}</span></p>
         </div>
       )}
-      <FormField id={id('passwordConfirm')} label="Şifre (tekrar)" error={errors.fields.passwordConfirm}>
+      <FormField id={id('passwordConfirm')} label="Şifre (tekrar)" required error={errors.fields.passwordConfirm}>
         {(a11y) => <PasswordInput id={id('passwordConfirm')} name="passwordConfirm" autoComplete="new-password" required {...a11y} />}
       </FormField>
 
       <div>
-        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 text-sm leading-6 text-gray-600 transition hover:border-primary-100 hover:bg-primary-50/40">
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-2xl border border-slate-100 bg-slate-50/70 p-3 text-[13px] leading-5 text-gray-600 transition hover:border-primary-100 hover:bg-primary-50/40">
           <input type="checkbox" name="acceptTerms" className="peer sr-only" aria-invalid={errors.fields.acceptTerms ? true : undefined} />
           <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-white transition peer-checked:border-primary-700 peer-checked:bg-primary-700 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 peer-focus-visible:ring-offset-2" aria-hidden="true">
             <Check size={14} strokeWidth={3} />
@@ -147,7 +167,7 @@ export default function RegisterForm({ redirect }: RegisterFormProps) {
         )}
       </div>
 
-      <Button type="submit" isLoading={pending} className="w-full">
+      <Button type="submit" icon={ArrowRight} isLoading={pending} className="w-full shadow-lg shadow-primary-700/15">
         Ücretsiz hesabımı oluştur
       </Button>
       <p className="flex items-center justify-center gap-1.5 text-center text-xs font-medium text-gray-400"><ShieldCheck size={14} /> Kart bilgisi gerekmez.</p>
