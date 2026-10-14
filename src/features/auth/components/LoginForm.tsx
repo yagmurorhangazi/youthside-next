@@ -70,7 +70,7 @@ export default function LoginForm({ redirect, initialEmail = '', notice }: Login
 
   const resend = async () => {
     setPending(true);
-    const { error } = await actions.auth.resendVerification({ email });
+    const { error } = await actions.auth.resendVerification({ email, redirect });
     setPending(false);
     if (error) return setErrors(toFormErrors(error));
     setUnverified(false);

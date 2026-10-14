@@ -1,11 +1,17 @@
 ---
 /**
  * [MODÜL: SOSYAL HESAP SEÇENEKLERİ]
- * Amaç: Giriş ve kayıt ekranlarında Google/LinkedIn seçeneklerini ortak, bölünmüş bir panelde sunmak.
- * Neden pasif: OAuth istemci kimlikleri ve sunucu akışı henüz hazır olmadığı için alanlar işlem
- *              başlatmaz; erişilebilir etiketler sağlayıcıların yakında açılacağını açıklar.
+ * Amaç: Giriş ve kayıt ekranlarında Google/LinkedIn ile devam etme seçeneklerini sunmak.
+ *   - Google: resmi GIS düğmesi (React island, betik yalnızca burada yüklenir)
+ *   - LinkedIn: sunucu yönlendirmesi başlatan düz link (JS gerekmez, mobilde popup sorunu yok)
+ * İstemci kimliği tanımlı olmayan sağlayıcı pasif gösterilir. `?redirect=` korunur; giriş sonrası
+ * bekleyen başvuru niyeti de e-posta girişiyle aynı kurala göre işlenir (completeLogin).
+ * `?oauth_hata=` varsa LinkedIn dönüş hatası burada gösterilir.
+ * Referans: youthside-2026-ui/giris-yap/index.php (Google/LinkedIn düğmeleri)
  */
-import { ROUTES } from '@/config/site';
+import { ROUTES, safeRedirect } from '@/config/site';
+import { getOAuthConfig, oauthErrorMessage } from '../oauth';
+import GoogleSignInButton from './GoogleSignInButton';
 
 interface Props {
   intent: 'login' | 'register';
@@ -16,58 +22,60 @@ const isRegister = intent === 'register';
 const actionLabel = isRegister ? 'kayıt ol' : 'giriş yap';
 const summary = isRegister ? 'Sosyal hesabınla hızlıca kayıt ol' : 'Sosyal hesabınla hızlıca giriş yap';
 const divider = isRegister ? 'veya e-posta ile kayıt ol' : 'veya e-posta ile giriş yap';
+
+const { googleClientId, linkedinClientId } = getOAuthConfig();
+const redirect = safeRedirect(Astro.url.searchParams.get('redirect'));
+const linkedinHref = `${ROUTES.linkedinStart}?redirect=${encodeURIComponent(redirect)}`;
+const oauthError = oauthErrorMessage(Astro.url.searchParams.get('oauth_hata'));
+const providerButton =
+  'flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 transition';
 ---
 
 <section aria-labelledby="social-auth-title">
   <h2 id="social-auth-title" class="sr-only">Sosyal hesap ile {actionLabel}</h2>
 
-  <div class="relative grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1">
-    <span class="absolute -top-2.5 right-3 z-10 rounded-full border border-primary-100 bg-primary-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-primary-700">
-      Yakında
-    </span>
-    <button
-      type="button"
-      disabled
-      title="Google bağlantısı yakında"
-      aria-label={`Google ile ${actionLabel} — yakında`}
-      class="flex min-h-12 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-white px-3 text-sm font-bold text-slate-600 shadow-sm"
-    >
-      <svg viewBox="0 0 48 48" class="h-5 w-5" aria-hidden="true">
-        <path
-          style="fill: var(--color-google-yellow)"
-          d="M6.2 33.08 12.72 28A12 12 0 0 1 12 24c0-1.41.24-2.76.68-4.49l-6.57-4.82A19.9 19.9 0 0 0 4 24c0 3.23.77 6.28 2.2 9.08Z"
-        ></path>
-        <path
-          style="fill: var(--color-google-red)"
-          d="m6.31 14.69 6.57 4.82C14.66 15.11 18.96 12 24 12c3.06 0 5.84 1.15 7.96 3.04l5.66-5.66C34.05 6.05 29.27 4 24 4 16.32 4 9.66 8.34 6.31 14.69Z"
-        ></path>
-        <path
-          style="fill: var(--color-google-green)"
-          d="M24 44c5.17 0 9.86-1.98 13.41-5.19l-6.19-5.24A11.93 11.93 0 0 1 24 36c-5.2 0-9.61-3.32-11.28-7.95L6.2 33.08C9.51 39.56 16.23 44 24 44Z"
-        ></path>
-        <path
-          style="fill: var(--color-google-blue)"
-          d="M43.61 20.08 43.6 20H24v8h11.3a12.03 12.03 0 0 1-4.08 5.57l6.19 5.24C36.97 39.21 44 34 44 24c0-1.34-.14-2.65-.39-3.92Z"
-        ></path>
-      </svg>
-      <span>Google</span>
-    </button>
+  {
+    oauthError && (
+      <p role="alert" class="mb-3 rounded-xl bg-red-50 p-3 text-center text-sm font-medium text-red-700">
+        {oauthError}
+      </p>
+    )
+  }
 
-    <button
-      type="button"
-      disabled
-      title="LinkedIn bağlantısı yakında"
-      aria-label={`LinkedIn ile ${actionLabel} — yakında`}
-      class="flex min-h-12 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-white px-3 text-sm font-bold text-slate-600 shadow-sm"
-    >
-      <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
-        <path
-          style="fill: var(--color-linkedin)"
-          d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.47-.9 1.63-1.85 3.37-1.85 3.6 0 4.26 2.37 4.26 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45Z"
-        ></path>
-      </svg>
-      <span>LinkedIn</span>
-    </button>
+  <div class="grid gap-2 sm:grid-cols-2">
+    {
+      googleClientId ? (
+        <GoogleSignInButton client:visible clientId={googleClientId} redirect={redirect} mode={intent} />
+      ) : (
+        <button type="button" disabled aria-label={`Google ile ${actionLabel} — şu an kullanılamıyor`} class:list={[providerButton, 'cursor-not-allowed opacity-60']}>
+          <svg viewBox="0 0 48 48" class="h-5 w-5" aria-hidden="true">
+            <path style="fill: var(--color-google-yellow)" d="M6.2 33.08 12.72 28A12 12 0 0 1 12 24c0-1.41.24-2.76.68-4.49l-6.57-4.82A19.9 19.9 0 0 0 4 24c0 3.23.77 6.28 2.2 9.08Z"></path>
+            <path style="fill: var(--color-google-red)" d="m6.31 14.69 6.57 4.82C14.66 15.11 18.96 12 24 12c3.06 0 5.84 1.15 7.96 3.04l5.66-5.66C34.05 6.05 29.27 4 24 4 16.32 4 9.66 8.34 6.31 14.69Z"></path>
+            <path style="fill: var(--color-google-green)" d="M24 44c5.17 0 9.86-1.98 13.41-5.19l-6.19-5.24A11.93 11.93 0 0 1 24 36c-5.2 0-9.61-3.32-11.28-7.95L6.2 33.08C9.51 39.56 16.23 44 24 44Z"></path>
+            <path style="fill: var(--color-google-blue)" d="M43.61 20.08 43.6 20H24v8h11.3a12.03 12.03 0 0 1-4.08 5.57l6.19 5.24C36.97 39.21 44 34 44 24c0-1.34-.14-2.65-.39-3.92Z"></path>
+          </svg>
+          <span>Google</span>
+        </button>
+      )
+    }
+
+    {
+      linkedinClientId ? (
+        <a href={linkedinHref} class:list={[providerButton, 'hover:border-[var(--color-linkedin)] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500']}>
+          <svg viewBox="0 0 24 24" class="h-5 w-5" aria-hidden="true">
+            <path
+              style="fill: var(--color-linkedin)"
+              d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.42v1.56h.05c.47-.9 1.63-1.85 3.37-1.85 3.6 0 4.26 2.37 4.26 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45Z"
+            ></path>
+          </svg>
+          <span>LinkedIn ile {isRegister ? 'kaydol' : 'giriş yap'}</span>
+        </a>
+      ) : (
+        <button type="button" disabled aria-label={`LinkedIn ile ${actionLabel} — şu an kullanılamıyor`} class:list={[providerButton, 'cursor-not-allowed opacity-60']}>
+          <span>LinkedIn</span>
+        </button>
+      )
+    }
   </div>
 
   <p class="mt-2 text-center text-[11px] font-medium text-slate-400">{summary}</p>

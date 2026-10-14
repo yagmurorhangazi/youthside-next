@@ -21,6 +21,7 @@ import {
   type MyEventRegistration,
   type ProfileCompleteness,
   type QuickRegisterInput,
+  type UploadResult,
 } from '../types';
 
 const DEFAULT_LIMIT = 10;
@@ -133,18 +134,18 @@ export class HttpCandidateRepository implements CandidateRepository {
     return isRecord(data?.completeness) ? toCompleteness(data.completeness) : null;
   }
 
-  async uploadAvatar(file: File): Promise<string> {
+  async uploadAvatar(file: File): Promise<UploadResult> {
     const form = new FormData();
     form.append('avatar', file);
     const data = await this.http.postForm<UnknownRecord>('candidates/upload-avatar', form);
-    return str(data?.avatar_url) ?? '';
+    return { url: str(data?.avatar_url) ?? '', completeness: isRecord(data?.completeness) ? toCompleteness(data.completeness) : null };
   }
 
-  async uploadResume(file: File): Promise<string> {
+  async uploadResume(file: File): Promise<UploadResult> {
     const form = new FormData();
     form.append('resume', file);
     const data = await this.http.postForm<UnknownRecord>('candidates/upload-resume', form);
-    return str(data?.resume_url) ?? '';
+    return { url: str(data?.resume_url) ?? '', completeness: isRecord(data?.completeness) ? toCompleteness(data.completeness) : null };
   }
 
   async myApplications(filter: ApplicationStatusFilter, page: number, limit = DEFAULT_LIMIT): Promise<Paginated<MyApplication>> {

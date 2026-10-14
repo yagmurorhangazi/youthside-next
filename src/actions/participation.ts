@@ -4,6 +4,7 @@
  *
  * Beklenen iş kuralı hataları (profil eksik, sözleşme onayı eksik, zaten başvurulmuş) ActionError
  * yerine yapılandırılmış sonuç olarak döner; arayüz her duruma özel ekran gösterebilsin.
+ * Başvuru/kayıt tamamlanınca (veya zaten yapılmışsa) aynı hedefe ait bekleyen niyet temizlenir.
  * Referans: api-docs-v2 → applications/create, registrations/create, registrations/quick-register
  */
 
@@ -41,6 +42,8 @@ export const participation = {
   apply: defineAction({
     input: z.object({
       jobId: uuid,
+      /** Profil eksik çıkarsa niyetin kaydedilebilmesi için (profil tamamlanınca popup açılır). */
+      jobSlug: z.string().trim().max(200).optional(),
       coverLetter: z.string().trim().max(5000).optional(),
       acceptedContracts: contractIds,
       answers: z
@@ -50,11 +53,15 @@ export const participation = {
     }),
     handler: async (input, context) => {
       requireUser(context.locals.user);
+      const { candidate, intent } = context.locals.services;
       try {
-        await context.locals.services.candidate.apply(input);
+        await candidate.apply(input);
+        await intent.complete('job', input.jobId);
         return { status: 'ok' as const };
       } catch (error) {
         const outcome = toBusinessOutcome(error);
+        if (outcome?.status === 'already_done') await intent.complete('job', input.jobId);
+        if (outcome?.status === 'profile_incomplete' && input.jobSlug) await intent.capture('job', input.jobSlug);
         if (outcome) return outcome;
         throw toActionError(error);
       }
@@ -65,11 +72,14 @@ export const participation = {
     input: z.object({ eventId: uuid, acceptedContracts: contractIds }),
     handler: async (input, context) => {
       requireUser(context.locals.user);
+      const { candidate, intent } = context.locals.services;
       try {
-        await context.locals.services.candidate.registerEvent(input.eventId, input.acceptedContracts);
+        await candidate.registerEvent(input.eventId, input.acceptedContracts);
+        await intent.complete('event', input.eventId);
         return { status: 'ok' as const };
       } catch (error) {
         const outcome = toBusinessOutcome(error);
+        if (outcome?.status === 'already_done') await intent.complete('event', input.eventId);
         if (outcome) return outcome;
         throw toActionError(error);
       }

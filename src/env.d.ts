@@ -13,5 +13,11 @@ declare namespace App {
 
   interface SessionData {
     auth: import('./features/auth/types').AuthSession;
+    /** Yarıda kalan başvuru/kayıt (24 saat). */
+    pendingIntent: import('./features/intent/types').PendingIntent;
+    /** Bu oturumda otomatik üretilen CV'nin adresi — elle yüklenen CV'yi ezmemek için. */
+    resumeOrigin: import('./features/candidate/types').ResumeOrigin;
+    /** LinkedIn ile giriş sürerken CSRF `state` değeri ve dönüş adresi (10 dk). */
+    oauthState: import('./features/auth/types').OAuthState;
   }
 }

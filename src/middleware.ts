@@ -50,7 +50,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const auth = await resolveAuth(context);
 
   context.locals.user = auth?.user ?? null;
-  context.locals.services = createServices(() => auth?.tokens.accessToken ?? null);
+  context.locals.services = createServices(() => auth?.tokens.accessToken ?? null, context.session);
 
   const { pathname, search } = context.url;
   if (!auth && isProtectedPath(pathname)) {

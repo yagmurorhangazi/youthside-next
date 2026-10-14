@@ -5,12 +5,14 @@
  */
 
 import { auth } from './auth';
+import { intent } from './intent';
 import { lookups } from './lookups';
 import { participation } from './participation';
 import { profile } from './profile';
 
 export const server = {
   auth,
+  intent,
   participation,
   profile,
   lookups,

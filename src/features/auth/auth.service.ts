@@ -1,7 +1,7 @@
 /**
  * [MODÜL: KİMLİK DOĞRULAMA SERVİSİ]
  * Amaç: Aday hesabı için giriş, kayıt, token yenileme ve şifre akışlarının API çağrıları.
- * Uçlar: auth/login · auth/refresh · auth/logout · candidates/platform-register
+ * Uçlar: auth/login · auth/oauth-login · auth/refresh · auth/logout · candidates/platform-register
  *        auth/forgot-password · auth/validate-reset-token · auth/reset-password
  *        auth/resend-verification · auth/update-password
  *
@@ -11,7 +11,7 @@
 
 import type { HttpClient } from '@/shared/api/http-client';
 import { isRecord, num, str, type UnknownRecord } from '@/shared/api/parse';
-import type { AuthSession, AuthTokens, RegisterInput, SessionUser } from './types';
+import type { AuthSession, AuthTokens, OAuthCredential, RegisterInput, SessionUser } from './types';
 
 const ACCOUNT_TYPE = 'candidate';
 
@@ -45,6 +45,19 @@ export class AuthService {
     const user = isRecord(data.user) ? data.user : {};
     const profile = isRecord(data.profile) ? data.profile : {};
     return { tokens: toTokens(data), user: toSessionUser(user, profile) };
+  }
+
+  /**
+   * Google (id_token) veya LinkedIn (authorization code) ile giriş/kayıt. Aynı e-postalı aday varsa
+   * API hesabı bağlar; 2FA sorulmaz. Yanıtta `profile` yoktur, kullanıcı özeti `user`'dan okunur.
+   */
+  async oauthLogin(credential: OAuthCredential): Promise<AuthSession> {
+    const body =
+      credential.provider === 'google'
+        ? { provider: 'google', id_token: credential.idToken }
+        : { provider: 'linkedin', code: credential.code, redirect_uri: credential.redirectUri };
+    const data = await this.http.post<UnknownRecord>('auth/oauth-login', body);
+    return { tokens: toTokens(data), user: toSessionUser(isRecord(data.user) ? data.user : {}) };
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {

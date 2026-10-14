@@ -5,6 +5,10 @@
  *
  * Kaydettikten sonra API'nin döndürdüğü yeni doluluk oranı gösterilir; kullanıcı bir ilandan
  * yönlendirildiyse ve profil yeterli hale geldiyse "İlana geri dön" düğmesi çıkar.
+ *
+ * Otomatik CV: Sunucu "üretilmeli" derse (CV yok veya önceki CV otomatikti) PDF tarayıcıda üretilip
+ * yüklenir. Son doluluk `$completeness` ile yayınlanır; bekleyen başvuru varsa popup hemen açılır.
+ * Referans: youthside-2026-ui/panelim/profilim → submitProfile + generateAutoCV(true)
  */
 
 import { useId, useState, type FormEvent } from 'react';
@@ -14,7 +18,9 @@ import { useEducationOptions } from '@/features/lookups/useEducationOptions';
 import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
 import { capitalizePersonName } from '@/shared/lib/text';
 import { Button, ButtonLink, FormAlert, FormField, Input, NameInput, Select } from '@/shared/ui';
-import { GENDERS, type CandidateProfile } from '../types';
+import { generateAndUploadResume } from '../generate-resume';
+import { $completeness, $resumeData, $resumeUrl } from '../store';
+import { GENDERS, type CandidateProfile, type ResumeData } from '../types';
 
 interface ProfileDetailsFormProps {
   readonly profile: CandidateProfile;
@@ -48,6 +54,7 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
   const education = useEducationOptions();
   const [errors, setErrors] = useState<FormErrorState>(NO_ERRORS);
   const [pending, setPending] = useState(false);
+  const [resumeStep, setResumeStep] = useState<'idle' | 'generating' | 'generated' | 'failed'>('idle');
   const [result, setResult] = useState<{ percentage: number; isEligible: boolean } | null>(null);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -55,10 +62,7 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
     const form = new FormData(event.currentTarget);
     const text = (key: string) => String(form.get(key) ?? '');
 
-    setPending(true);
-    setErrors(NO_ERRORS);
-    setResult(null);
-    const { data, error } = await actions.profile.update({
+    const input = {
       firstName: capitalizePersonName(text('firstName')),
       lastName: capitalizePersonName(text('lastName')),
       phone: text('phone'),
@@ -69,10 +73,49 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
       graduationYear: text('graduationYear'),
       linkedinUrl: text('linkedinUrl'),
       githubUrl: text('githubUrl'),
-    });
+    };
+
+    setPending(true);
+    setErrors(NO_ERRORS);
+    setResult(null);
+    setResumeStep('idle');
+    const { data, error } = await actions.profile.update(input);
+    if (error) {
+      setPending(false);
+      return setErrors(toFormErrors(error));
+    }
+
+    const resumeData: ResumeData = {
+      fullName: `${input.firstName} ${input.lastName}`.trim(),
+      email: profile.email,
+      phone: input.phone || null,
+      university: input.university || null,
+      department: input.department || null,
+      grade: input.grade || null,
+      graduationYear: input.graduationYear || null,
+      linkedinUrl: input.linkedinUrl || null,
+      githubUrl: input.githubUrl || null,
+    };
+    $resumeData.set(resumeData);
+
+    let completeness = data.completeness;
+    if (data.shouldGenerateResume) {
+      setResumeStep('generating');
+      const generated = await generateAndUploadResume(resumeData);
+      if (generated.ok) {
+        setResumeStep('generated');
+        $resumeUrl.set(generated.resumeUrl);
+        completeness = generated.completeness ?? completeness;
+      } else {
+        setResumeStep('failed');
+      }
+    }
     setPending(false);
-    if (error) return setErrors(toFormErrors(error));
-    setResult(data.completeness ? { percentage: data.completeness.percentage, isEligible: data.completeness.isEligible } : { percentage: 0, isEligible: false });
+
+    const next = completeness ? { percentage: completeness.percentage, isEligible: completeness.isEligible } : { percentage: 0, isEligible: false };
+    setResult(next);
+    // CV adımı bittikten sonra yayınlanır: popup eski CV ile başvuru göndermesin.
+    if (completeness) $completeness.set(next);
   };
 
   const id = (name: string) => `${uid}-${name}`;
@@ -161,10 +204,16 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
       </Section>
 
       {errors.message && <div className="px-5 pt-5 sm:px-6"><FormAlert>{errors.message}</FormAlert></div>}
+      {resumeStep === 'failed' && (
+        <div className="px-5 pt-5 sm:px-6">
+          <FormAlert variant="warning">CV otomatik oluşturulamadı. Başvuru yapabilmek için yukarıdan CV dosyanı yükleyebilirsin.</FormAlert>
+        </div>
+      )}
       {result && (
         <div className="px-5 pt-5 sm:px-6">
           <FormAlert variant="success" title="Profilin güncellendi">
             Profil doluluk oranın şu an <strong>%{result.percentage}</strong>.
+            {resumeStep === 'generated' && <span className="mt-1 block">CV’n profil bilgilerinden otomatik oluşturuldu ve profiline eklendi.</span>}
             {returnTo && result.isEligible && (
               <ButtonLink href={returnTo} size="sm" icon={ArrowRight} className="mt-3">
                 İlana geri dön ve başvur
@@ -177,7 +226,7 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
       <div className="flex items-center justify-between gap-4 bg-slate-50/70 p-4 sm:px-6">
         <p className="hidden text-xs text-slate-500 sm:block">Değişikliklerini kaydederek profilini güncel tut.</p>
         <Button type="submit" icon={Save} isLoading={pending} className="w-full sm:w-auto">
-          Değişiklikleri kaydet
+          {resumeStep === 'generating' ? 'CV oluşturuluyor…' : 'Değişiklikleri kaydet'}
         </Button>
       </div>
     </form>

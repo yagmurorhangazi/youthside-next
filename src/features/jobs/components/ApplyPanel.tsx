@@ -5,23 +5,27 @@
  * Durum (`state`) sunucuda `resolveApplyState` ile hesaplanır; bu bileşen yalnızca o duruma göre
  * arayüz çizer ve "hazır" durumunda başvuru formunu açar (SRP).
  * Masaüstünde kenar çubuğunda kart, mobilde ekranın altına sabit aksiyon çubuğu olarak görünür.
- * Gönderim `actions.participation.apply` ile yapılır; token tarayıcıya hiç inmez.
+ * Gönderim ortak `ApplicationForm` ile yapılır; token tarayıcıya hiç inmez.
+ * Misafir/eksik profil linkleri tıklanınca bekleyen niyet kaydedilir (giriş veya profil tamamlama
+ * sonrası popup ile hatırlatılır). Popup aynı sayfada başvuruyu gönderirse `$participationDone`
+ * sinyaliyle bu panel de "Başvurun alındı" durumuna geçer.
  */
 
-import { useState, type FormEvent } from 'react';
-import { actions } from 'astro:actions';
+import { useEffect, useState } from 'react';
+import { useStore } from '@nanostores/react';
 import { AlertCircle, ArrowRight, CheckCircle2, Clock, ExternalLink, LogIn, Send, UserRoundCog } from 'lucide-react';
 import { ROUTES } from '@/config/site';
-import { allRequiredAccepted, ContractChecklist } from '@/features/common/components/ContractChecklist';
 import type { Contract } from '@/features/common/types';
-import { toFormErrors } from '@/shared/lib/action-result';
+import { captureIntentOnClick } from '@/features/intent/capture';
+import { $participationDone } from '@/features/intent/store';
 import { Button, ButtonLink, Modal } from '@/shared/ui';
 import type { ApplyState } from '../lib/apply-state';
 import type { JobQuestion } from '../types';
-import { isAnswered, QuestionField, type Answer } from './QuestionField';
+import { ApplicationForm } from './ApplicationForm';
 
 interface ApplyPanelProps {
   readonly jobId: string;
+  readonly jobSlug: string;
   readonly jobTitle: string;
   readonly companyName: string;
   readonly jobPath: string;
@@ -32,8 +36,6 @@ interface ApplyPanelProps {
   readonly contracts: readonly Contract[];
   readonly completeness: { readonly percentage: number; readonly threshold: number; readonly missing: readonly string[] } | null;
 }
-
-type Answers = Record<string, Answer>;
 
 /** Durum başına kart içeriği (başlık + açıklama). */
 const COPY: Record<ApplyState, { title: string; text: string }> = {
@@ -46,60 +48,21 @@ const COPY: Record<ApplyState, { title: string; text: string }> = {
 };
 
 export default function ApplyPanel(props: ApplyPanelProps) {
-  const { jobId, jobTitle, companyName, jobPath, deadlineLabel, externalUrl, questions, contracts, completeness } = props;
+  const { jobId, jobSlug, jobTitle, companyName, jobPath, deadlineLabel, externalUrl, questions, contracts, completeness } = props;
   const [state, setState] = useState<ApplyState>(props.initialState);
   const [open, setOpen] = useState(false);
-  const [answers, setAnswers] = useState<Answers>({});
-  const [accepted, setAccepted] = useState<string[]>([]);
-  const [coverLetter, setCoverLetter] = useState('');
-  const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [missingFields, setMissingFields] = useState<readonly string[]>(completeness?.missing ?? []);
+  const participation = useStore($participationDone);
+
+  // Bekleyen niyet popup'ı bu ilana başvurduysa panel de güncellenir.
+  useEffect(() => {
+    if (participation?.kind === 'job' && participation.targetId === jobId) setState('applied');
+  }, [participation, jobId]);
 
   const loginHref = `${ROUTES.login}?redirect=${encodeURIComponent(jobPath)}`;
   const profileHref = `${ROUTES.profile}?redirect=${encodeURIComponent(jobPath)}`;
-
-  const questionErrors: Record<string, string> = submitted
-    ? Object.fromEntries(questions.filter((q) => q.isRequired && !isAnswered(answers[q.id])).map((q) => [q.id, 'Bu soru zorunlu.']))
-    : {};
-  const contractsOk = allRequiredAccepted(contracts, accepted);
-
-  const onSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setSubmitted(true);
-    setMessage(null);
-    const unanswered = questions.some((q) => q.isRequired && !isAnswered(answers[q.id]));
-    if (unanswered || !contractsOk) {
-      setMessage('Lütfen zorunlu alanları doldur.');
-      return;
-    }
-
-    setPending(true);
-    const { data, error } = await actions.participation.apply({
-      jobId,
-      coverLetter: coverLetter.trim() || undefined,
-      acceptedContracts: accepted,
-      answers: questions.filter((q) => isAnswered(answers[q.id])).map((q) => ({ questionId: q.id, answer: answers[q.id] })),
-    });
-    setPending(false);
-
-    if (error) {
-      setMessage(toFormErrors(error).message);
-      return;
-    }
-    if (data.status === 'ok' || data.status === 'already_done') {
-      setState('applied');
-      return;
-    }
-    if (data.status === 'profile_incomplete') {
-      setMissingFields(data.missingFields);
-      setState('incomplete');
-      setOpen(false);
-      return;
-    }
-    setMessage(data.message);
-  };
+  const rememberIntent = captureIntentOnClick('job', jobSlug);
 
   const primaryAction = (() => {
     switch (state) {
@@ -111,7 +74,7 @@ export default function ApplyPanel(props: ApplyPanelProps) {
         );
       case 'guest':
         return (
-          <ButtonLink href={loginHref} icon={LogIn} className="w-full">
+          <ButtonLink href={loginHref} icon={LogIn} className="w-full" onClick={rememberIntent}>
             Giriş yap ve başvur
           </ButtonLink>
         );
@@ -123,7 +86,7 @@ export default function ApplyPanel(props: ApplyPanelProps) {
         );
       case 'incomplete':
         return (
-          <ButtonLink href={profileHref} icon={UserRoundCog} className="w-full">
+          <ButtonLink href={profileHref} icon={UserRoundCog} className="w-full" onClick={rememberIntent}>
             Profilimi tamamla
           </ButtonLink>
         );
@@ -179,7 +142,7 @@ export default function ApplyPanel(props: ApplyPanelProps) {
         {state === 'guest' && (
           <p className="mt-3 text-center text-sm text-gray-500">
             Hesabın yok mu?{' '}
-            <a href={`${ROUTES.register}?redirect=${encodeURIComponent(jobPath)}`} className="font-bold text-primary-600 hover:underline">
+            <a href={`${ROUTES.register}?redirect=${encodeURIComponent(jobPath)}`} onClick={rememberIntent} className="font-bold text-primary-600 hover:underline">
               Ücretsiz kayıt ol
             </a>
           </p>
@@ -222,56 +185,22 @@ export default function ApplyPanel(props: ApplyPanelProps) {
             </div>
           </div>
         ) : (
-          <form onSubmit={onSubmit} noValidate className="space-y-6 px-5 pb-6 sm:px-8 sm:pb-8">
-            <p className="rounded-2xl bg-gray-50 p-4 text-sm text-gray-600">
-              <strong className="text-gray-900">{jobTitle}</strong> · {companyName}
-              <br />
-              Profil bilgilerin ve yüklediğin CV başvuruna otomatik eklenecek.
-            </p>
-
-            {questions.map((question) => (
-              <QuestionField
-                key={question.id}
-                question={question}
-                value={answers[question.id] ?? ''}
-                onChange={(value) => setAnswers((current) => ({ ...current, [question.id]: value }))}
-                error={questionErrors[question.id]}
-              />
-            ))}
-
-            <div>
-              <label htmlFor="cover-letter" className="mb-2 block text-sm font-semibold text-gray-800">
-                Ön yazı <span className="font-normal text-gray-400">(isteğe bağlı)</span>
-              </label>
-              <textarea
-                id="cover-letter"
-                rows={4}
-                maxLength={5000}
-                value={coverLetter}
-                onChange={(event) => setCoverLetter(event.target.value)}
-                placeholder="Bu pozisyon için neden uygun olduğunu kısaca anlat."
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-primary-400 focus:outline-none focus:ring-4 focus:ring-primary-500/10"
-              />
-            </div>
-
-            <ContractChecklist contracts={contracts} accepted={accepted} onChange={setAccepted} showErrors={submitted} />
-
-            {message && (
-              <p role="alert" className="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700">
-                <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
-                {message}
-              </p>
-            )}
-
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
-                Vazgeç
-              </Button>
-              <Button type="submit" icon={Send} isLoading={pending}>
-                Başvuruyu gönder
-              </Button>
-            </div>
-          </form>
+          <ApplicationForm
+            jobId={jobId}
+            jobSlug={jobSlug}
+            jobTitle={jobTitle}
+            companyName={companyName}
+            questions={questions}
+            contracts={contracts}
+            onApplied={() => setState('applied')}
+            onProfileIncomplete={(fields) => {
+              setMissingFields(fields);
+              setState('incomplete');
+              setOpen(false);
+            }}
+            onCancel={() => setOpen(false)}
+            onPendingChange={setPending}
+          />
         )}
       </Modal>
     </>

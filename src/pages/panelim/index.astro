@@ -14,15 +14,16 @@ import ParticipationRow from '@/features/candidate/components/ParticipationRow.a
 import { applicationRow, registrationRow } from '@/features/candidate/lib/participation-display';
 import JobCard from '@/features/jobs/components/JobCard.astro';
 
-const { candidate, jobs } = Astro.locals.services;
+const { candidate, jobs, intent } = Astro.locals.services;
 const user = Astro.locals.user!;
 const safe = createSafeLoader('PANEL');
 
-const [completeness, activeApps, events, recommended] = await Promise.all([
+const [completeness, activeApps, events, recommended, pendingIntent] = await Promise.all([
   safe(candidate.getCompleteness(), 'Profil doluluğu'),
   safe(candidate.myApplications('active', 1, 3), 'Başvurular'),
   safe(candidate.myEvents(1, 3), 'Etkinlikler'),
   safe(jobs.recommended(3), 'Öneriler'),
+  intent.summary(),
 ]);
 
 const firstName = user.name.split(' ')[0];
@@ -57,7 +58,7 @@ const box = 'rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-card 
       </div>
     </section>
 
-    {completeness && <CompletenessCard completeness={completeness} />}
+    {completeness && <CompletenessCard completeness={completeness} returnTo={pendingIntent?.kind === 'job' ? pendingIntent.path : null} />}
 
     <div class="grid gap-6 xl:grid-cols-2">
       <section class={box} aria-labelledby="recent-apps">

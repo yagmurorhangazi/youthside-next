@@ -12,9 +12,12 @@ interface Props {
   completeness: ProfileCompleteness;
   /** Profil sayfasında "Profilini tamamla" linki gösterilmez. */
   showLink?: boolean;
+  /** Başvuru akışından gelindiyse dönüş adresi profil sayfasına taşınır (bağlam kaybolmaz). */
+  returnTo?: string | null;
 }
 
-const { completeness, showLink = true } = Astro.props;
+const { completeness, showLink = true, returnTo = null } = Astro.props;
+const profileHref = returnTo ? `${ROUTES.profile}?redirect=${encodeURIComponent(returnTo)}` : ROUTES.profile;
 const { percentage, isEligible, threshold, missingFields } = completeness;
 const sorted = [...missingFields].sort((a, b) => b.weight - a.weight);
 ---
@@ -64,7 +67,7 @@ const sorted = [...missingFields].sort((a, b) => b.weight - a.weight);
 
   {
     showLink && sorted.length > 0 && (
-      <a href={ROUTES.profile} class="mt-4 inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-primary-700">
+      <a href={profileHref} class="mt-4 inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-primary-700">
         Profilimi tamamla <ArrowRight size={15} aria-hidden="true" />
       </a>
     )

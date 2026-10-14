@@ -54,6 +54,29 @@ export interface ProfileCompleteness {
   readonly missingFields: readonly MissingField[];
 }
 
+/**
+ * Otomatik üretilen CV'nin kaydı (oturumda). Profil kaydında CV yalnızca hiç yoksa veya mevcut CV
+ * bu adresle aynıysa (yani daha önce otomatik üretilmişse) yeniden üretilir; elle yüklenen CV ezilmez.
+ * Not: API `resume_source` alanı sunarsa bu kayıt kaldırılır (bkz. plan → API önerisi B).
+ */
+export interface ResumeOrigin {
+  readonly url: string;
+  readonly source: 'auto';
+}
+
+/** Otomatik CV şablonunun ihtiyaç duyduğu profil alanları. */
+export interface ResumeData {
+  readonly fullName: string;
+  readonly email: string;
+  readonly phone: string | null;
+  readonly university: string | null;
+  readonly department: string | null;
+  readonly grade: string | null;
+  readonly graduationYear: string | null;
+  readonly linkedinUrl: string | null;
+  readonly githubUrl: string | null;
+}
+
 export interface MyApplication {
   readonly id: string;
   readonly appliedAt: string | null;
@@ -105,13 +128,19 @@ export interface QuickRegisterInput {
   readonly honeypot?: string;
 }
 
+/** Dosya yükleme sonucu: CDN adresi + API'nin hesapladığı yeni doluluk (popup eşiği için). */
+export interface UploadResult {
+  readonly url: string;
+  readonly completeness: ProfileCompleteness | null;
+}
+
 /** Aday işlemleri sözleşmesi (Dependency Inversion). Tüm metotlar aday token'ı gerektirir (quickRegister hariç). */
 export interface CandidateRepository {
   getProfile(): Promise<CandidateProfile>;
   getCompleteness(): Promise<ProfileCompleteness>;
   updateProfile(input: CandidateProfileInput): Promise<ProfileCompleteness | null>;
-  uploadAvatar(file: File): Promise<string>;
-  uploadResume(file: File): Promise<string>;
+  uploadAvatar(file: File): Promise<UploadResult>;
+  uploadResume(file: File): Promise<UploadResult>;
   myApplications(filter: ApplicationStatusFilter, page: number, limit?: number): Promise<Paginated<MyApplication>>;
   myEvents(page: number, limit?: number): Promise<Paginated<MyEventRegistration>>;
   hasApplied(jobId: string): Promise<boolean>;

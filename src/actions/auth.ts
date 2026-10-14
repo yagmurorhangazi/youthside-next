@@ -10,7 +10,8 @@
 import { defineAction } from 'astro:actions';
 import { z } from 'astro/zod';
 import { ROUTES, SITE, safeRedirect } from '@/config/site';
-import { writeAuthSession } from '@/features/auth/session-store';
+import { completeLogin } from '@/features/auth/complete-login';
+import { withResumeFlag } from '@/features/intent/lib/intent-rules';
 import { ApiError } from '@/shared/api/errors';
 import { requireUser, run, toActionError } from './errors';
 import { emailSchema, nameSchema, passwordSchema } from './schemas';
@@ -33,10 +34,7 @@ export const auth = {
     handler: async (input, context) => {
       try {
         const session = await context.locals.services.auth.login(input.email, input.password, input.otpCode);
-        // Oturum kimliği yenilenir: giriş öncesi ele geçirilmiş bir kimlik kullanılamaz (session fixation).
-        await context.session?.regenerate();
-        writeAuthSession(context.session, session);
-        return { status: 'ok' as const, redirect: safeRedirect(input.redirect) };
+        return { status: 'ok' as const, redirect: await completeLogin(context.session, session, input.redirect) };
       } catch (error) {
         if (error instanceof ApiError) {
           if (error.status === 403 && error.errors.require_otp) return { status: 'otp_required' as const };
@@ -45,6 +43,19 @@ export const auth = {
         throw toActionError(error);
       }
     },
+  }),
+
+  /**
+   * Google ile giriş/kayıt. Tarayıcıdaki Google Identity Services `id_token` verir; doğrulamayı API
+   * yapar (auth/oauth-login). Aynı e-postalı hesap varsa bağlanır, yoksa yeni aday hesabı açılır.
+   */
+  googleLogin: defineAction({
+    input: z.object({ idToken: z.string().min(20).max(8000), redirect: z.string().max(500).optional() }),
+    handler: (input, context) =>
+      run(async () => {
+        const session = await context.locals.services.auth.oauthLogin({ provider: 'google', idToken: input.idToken });
+        return { redirect: await completeLogin(context.session, session, input.redirect) };
+      }),
   }),
 
   register: defineAction({
@@ -85,10 +96,20 @@ export const auth = {
     handler: (input, context) => run(() => context.locals.services.auth.resetPassword(input.token, input.password)),
   }),
 
+  /**
+   * Doğrulama bağlantısı giriş sayfasına `?redirect=` ile döner. Bekleyen niyet varsa ilan/etkinlik
+   * yolu `?devam=1` ile eklenir: e-posta başka cihazda açılsa bile sayfa niyeti yeniden kurar.
+   */
   resendVerification: defineAction({
-    input: z.object({ email: emailSchema }),
+    input: z.object({ email: emailSchema, redirect: z.string().max(500).optional() }),
     handler: (input, context) =>
-      run(() => context.locals.services.auth.resendVerification(input.email, new URL(ROUTES.login, context.url.origin || SITE.url).href)),
+      run(async () => {
+        const pending = await context.locals.services.intent.summary();
+        const target = pending ? withResumeFlag(pending.path) : input.redirect ? safeRedirect(input.redirect) : null;
+        const loginUrl = new URL(ROUTES.login, context.url.origin || SITE.url);
+        if (target && target !== ROUTES.dashboard) loginUrl.searchParams.set('redirect', target);
+        await context.locals.services.auth.resendVerification(input.email, loginUrl.href);
+      }),
   }),
 
   updatePassword: defineAction({

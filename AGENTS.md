@@ -71,8 +71,18 @@ src/
   (genel bakış, ilanlar, etkinlikler, ödüller, fotoğraflar), ilan detayı + başvuru, etkinlik detayı + kayıt/hızlı kayıt,
   giriş (2FA, doğrulama e-postası), kayıt, şifremi unuttum/sıfırla, panel (genel bakış, başvurularım, etkinliklerim,
   profilim + fotoğraf/CV yükleme + şifre değişikliği), yasal metinler, 404, sitemap.xml, robots.txt.
-- Yapılmadı: OAuth (Google/LinkedIn) girişi — istemci kimlikleri gerekiyor.
-- Prod notu: Oturum sürücüsü varsayılan olarak dosya sistemi; çok sunuculu ortamda Redis vb. kullanılmalı.
+- Bekleyen niyet (2026-10-14): `features/intent/` — yarıda kalan ilan başvurusu/etkinlik kaydı oturumda 24 saat tutulur;
+  global `PendingIntentPrompt` island'ı (BaseLayout) şerit + 5 sn otomatik onay popup'ı gösterir. Zorunlu soru/sözleşme
+  varsa otomatik onay yapılmaz (KVKK). Island'lar arası sinyal: nanostores (`features/*/store.ts`).
+- Otomatik CV: profil kaydında CV yoksa (veya önceki CV otomatikse) PDF tarayıcıda `@react-pdf/renderer` ile üretilir
+  (tembel yüklenir, sunucuya yük yok); elle yüklenen CV ezilmez.
+- Sosyal giriş: Google (GIS düğmesi → `auth.googleLogin`) ve LinkedIn (`/oauth/linkedin` → `/linkedin-callback`, state oturumda).
+  İstemci kimlikleri `astro.config.mjs` env (`GOOGLE_CLIENT_ID`, `LINKEDIN_CLIENT_ID`, çalışma anında okunur). Sağlayıcı
+  panellerinde kayıt gerekir: Google JS origin `http://localhost:4321` + `https://youthside.co`; LinkedIn redirect
+  `http://localhost:4321/linkedin-callback/` + `https://youthside.co/linkedin-callback/` (port ve sondaki "/" birebir).
+- Prod: Docker + Apache reverse proxy (`Dockerfile`, `docker-compose.yml`, `deploy/`). Oturum sürücüsü `.sessions/`
+  (volume); temizlik `scripts/cleanup-sessions.mjs` (saatlik cron). Çok sunuculu ortamda yalnızca driver Redis yapılır.
+- API önerileri (zorunlu değil): `platform-register` için `redirect_url`; `upload-resume` için `source` + `auth/me` → `resume_source`.
 - Dev notu: React island'larında `_jsxDEV is not a function` görülürse `node_modules/.vite` silinip dev sunucusu yeniden başlatılır.
 
 ## Development

@@ -8,9 +8,10 @@ import { ROUTES, safeRedirect } from '@/config/site';
 import AuthLayout from '@/features/auth/components/AuthLayout.astro';
 import RegisterForm from '@/features/auth/components/RegisterForm';
 
-if (Astro.locals.user) return Astro.redirect(ROUTES.dashboard, 302);
 const rawRedirect = Astro.url.searchParams.get('redirect');
 const redirect = rawRedirect ? safeRedirect(rawRedirect) : null;
+// Zaten girişliyse istenen sayfaya (ör. başvurulacak ilan) gidilir; bağlam kaybolmaz.
+if (Astro.locals.user) return Astro.redirect(redirect ?? ROUTES.dashboard, 302);
 ---
 
 <AuthLayout title="Kayıt Ol" heading="Ücretsiz hesabını oluştur" subheading="Bir dakikada kaydol, fırsatları kaçırma." socialIntent="register">

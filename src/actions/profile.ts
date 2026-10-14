@@ -3,11 +3,16 @@
  * Amaç: Adayın profil bilgilerini, fotoğrafını ve CV'sini güncellemek.
  * Dosya yüklemeleri `accept: 'form'` ile multipart alınır, boyut/tür sunucuda da doğrulanır
  * (istemci kontrolü atlanabilir; asıl güvenlik sunucudadır).
+ *
+ * Otomatik CV: PDF tarayıcıda üretilir (sunucuya CPU yükü yok). Sunucu yalnızca "üretilmeli mi?"
+ * kararını verir (`resume-policy`) ve üretilen CV'nin adresini oturumda işaretler.
  */
 
 import { ActionError, defineAction } from 'astro:actions';
 import { z } from 'astro/zod';
 import { updateSessionUser } from '@/features/auth/session-store';
+import { readResumeOrigin, writeResumeOrigin } from '@/features/candidate/data/session-resume-origin';
+import { shouldAutoGenerateResume } from '@/features/candidate/lib/resume-policy';
 import { requireUser, run } from './errors';
 import { nameSchema, phoneSchema } from './schemas';
 
@@ -52,10 +57,17 @@ export const profile = {
     }),
     handler: (input, context) => {
       requireUser(context.locals.user);
+      const { candidate } = context.locals.services;
       return run(async () => {
-        const completeness = await context.locals.services.candidate.updateProfile(input);
+        const completeness = await candidate.updateProfile(input);
         await updateSessionUser(context.session, { name: `${input.firstName} ${input.lastName}`.trim() });
-        return { completeness };
+
+        // Doluluk okunamadıysa CV durumu bilinmiyor → üretilmez (elle yüklenmiş CV'yi ezme riski).
+        const hasResume = completeness ? !completeness.missingFields.some((field) => field.field === 'resume_url') : true;
+        const origin = await readResumeOrigin(context.session);
+        // Mevcut CV adresi yalnızca daha önce otomatik CV üretildiyse sorulur (gereksiz API çağrısı yok).
+        const currentUrl = hasResume && origin ? (await candidate.getProfile().catch(() => null))?.resumeUrl ?? null : null;
+        return { completeness, shouldGenerateResume: shouldAutoGenerateResume({ hasResume, currentUrl, origin }) };
       });
     },
   }),
@@ -67,20 +79,25 @@ export const profile = {
       requireUser(context.locals.user);
       assertFile(input.file, AVATAR_TYPES, 5 * MB, 'Profil fotoğrafı');
       return run(async () => {
-        const avatarUrl = await context.locals.services.candidate.uploadAvatar(input.file);
+        const { url: avatarUrl, completeness } = await context.locals.services.candidate.uploadAvatar(input.file);
         await updateSessionUser(context.session, { avatarUrl });
-        return { avatarUrl };
+        return { avatarUrl, completeness };
       });
     },
   }),
 
+  /** `source=generated`: tarayıcıda profil bilgisinden üretilen CV; sonraki profil kayıtlarında yenilenebilir. */
   uploadResume: defineAction({
     accept: 'form',
-    input: z.object({ file: z.instanceof(File) }),
+    input: z.object({ file: z.instanceof(File), source: z.enum(['uploaded', 'generated']).default('uploaded') }),
     handler: (input, context) => {
       requireUser(context.locals.user);
       assertFile(input.file, RESUME_TYPES, 10 * MB, 'CV');
-      return run(async () => ({ resumeUrl: await context.locals.services.candidate.uploadResume(input.file) }));
+      return run(async () => {
+        const { url: resumeUrl, completeness } = await context.locals.services.candidate.uploadResume(input.file);
+        writeResumeOrigin(context.session, input.source === 'generated' ? resumeUrl : null);
+        return { resumeUrl, completeness };
+      });
     },
   }),
 };

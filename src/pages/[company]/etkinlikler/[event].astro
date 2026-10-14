@@ -5,6 +5,7 @@
  * URL: /{şirket-slug}/etkinlikler/{etkinlik-slug}
  * Referans: youthside-2026-ui/sirket-profili/etkinlikler/detail.php
  * Veri: events/get?slug= · (aday) registrations/check · events/list (organizatörün diğer etkinlikleri)
+ * `?devam=1`: girişli adayın bekleyen kayıt niyeti yeniden kurulur (bkz. ilan detayı).
  */
 import { Building2, CalendarDays, Clock, Globe, MapPin, Mic2, Tent, UsersRound } from 'lucide-react';
 import SocialIcon from '@/components/layout/SocialIcon.astro';
@@ -15,6 +16,7 @@ import RegisterPanel from '@/features/events/components/RegisterPanel';
 import { PHASE_LABEL, formatSessionTime, getEventDateInfo, getEventLocationLabel } from '@/features/events/lib/event-display';
 import { buildEventSchema } from '@/features/events/lib/event-schema';
 import { resolveRegistrationState } from '@/features/events/lib/registration-state';
+import { RESUME_PARAM } from '@/features/intent/lib/intent-rules';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getInitials } from '@/shared/lib/text';
 import Breadcrumbs from '@/shared/ui/Breadcrumbs.astro';
@@ -23,7 +25,7 @@ import Container from '@/shared/ui/Container.astro';
 import ViewTracker from '@/shared/ui/ViewTracker.astro';
 
 const { company: companySlug = '', event: eventSlug = '' } = Astro.params;
-const { events, candidate } = Astro.locals.services;
+const { events, candidate, intent } = Astro.locals.services;
 const user = Astro.locals.user;
 
 const event = await events.getBySlug(eventSlug);
@@ -31,6 +33,10 @@ if (!event) return Astro.rewrite('/404');
 
 const canonicalPath = ROUTES.eventDetail(event.company.slug, event.slug);
 if (event.company.slug && event.company.slug !== companySlug) return Astro.redirect(canonicalPath, 301);
+if (Astro.url.searchParams.has(RESUME_PARAM)) {
+  if (user) await intent.capture('event', event.slug);
+  return Astro.redirect(canonicalPath, 302);
+}
 
 const safe = createSafeLoader('ETKINLIK_DETAY');
 const [isRegistered, organizerEvents] = await Promise.all([
@@ -183,6 +189,7 @@ const facts = [
         <RegisterPanel
           client:load
           eventId={event.id}
+          eventSlug={event.slug}
           eventTitle={event.title}
           eventPath={canonicalPath}
           dateLabel={date.label}

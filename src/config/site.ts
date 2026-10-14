@@ -35,6 +35,12 @@ export const ROUTES = {
   forgotPassword: '/sifremi-unuttum',
   resetPassword: '/sifre-sifirla',
   logout: '/guvenli-cikis',
+  /**
+   * LinkedIn yetkilendirmesini başlatan sunucu ucu ve dönüş adresi. Dönüş adresi LinkedIn uygulamasındaki
+   * kayıtla BİREBİR aynı olmalı (port ve sondaki "/" dahil); mevcut kayıtlar "/" ile bittiği için öyle.
+   */
+  linkedinStart: '/oauth/linkedin',
+  linkedinCallback: '/linkedin-callback/',
   dashboard: '/panelim',
   myApplications: '/panelim/basvurularim',
   myEvents: '/panelim/etkinliklerim',

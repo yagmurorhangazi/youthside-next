@@ -4,14 +4,19 @@
  *   - Giriş yapmış aday: sözleşme yoksa tek tıkla, varsa onay penceresiyle kayıt
  *   - Misafir: "Giriş yap" veya hesap açmadan hızlı kayıt formu
  * Durum sunucuda `resolveRegistrationState` ile hesaplanır (SRP).
+ * "Giriş yaparak kaydol" tıklanınca bekleyen niyet kaydedilir; giriş sonrası popup kaydı tamamlar ve
+ * `$participationDone` sinyaliyle bu panel de güncellenir.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useStore } from '@nanostores/react';
 import { actions } from 'astro:actions';
 import { AlertCircle, CalendarCheck, CheckCircle2, Clock, ExternalLink, LogIn, Ticket, UsersRound } from 'lucide-react';
 import { ROUTES } from '@/config/site';
 import { allRequiredAccepted, ContractChecklist } from '@/features/common/components/ContractChecklist';
 import type { Contract } from '@/features/common/types';
+import { captureIntentOnClick } from '@/features/intent/capture';
+import { $participationDone } from '@/features/intent/store';
 import { toFormErrors } from '@/shared/lib/action-result';
 import { Button, ButtonLink, Modal } from '@/shared/ui';
 import type { RegistrationState } from '../lib/registration-state';
@@ -19,6 +24,7 @@ import { QuickRegisterForm } from './QuickRegisterForm';
 
 interface RegisterPanelProps {
   readonly eventId: string;
+  readonly eventSlug: string;
   readonly eventTitle: string;
   readonly eventPath: string;
   readonly dateLabel: string;
@@ -39,13 +45,19 @@ const COPY: Record<RegistrationState, { title: string; text: string }> = {
 };
 
 export default function RegisterPanel(props: RegisterPanelProps) {
-  const { eventId, eventTitle, eventPath, dateLabel, externalUrl, contracts, remainingQuota } = props;
+  const { eventId, eventSlug, eventTitle, eventPath, dateLabel, externalUrl, contracts, remainingQuota } = props;
   const [state, setState] = useState<RegistrationState>(props.initialState);
   const [dialog, setDialog] = useState<'none' | 'contracts' | 'quick' | 'success'>('none');
   const [accepted, setAccepted] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [newAccount, setNewAccount] = useState(false);
+  const participation = useStore($participationDone);
+
+  // Bekleyen niyet popup'ı bu etkinliğe kaydettiyse panel de güncellenir.
+  useEffect(() => {
+    if (participation?.kind === 'event' && participation.targetId === eventId) setState('registered');
+  }, [participation, eventId]);
 
   const complete = (isNewAccount = false) => {
     setNewAccount(isNewAccount);
@@ -73,6 +85,7 @@ export default function RegisterPanel(props: RegisterPanelProps) {
   };
 
   const loginHref = `${ROUTES.login}?redirect=${encodeURIComponent(eventPath)}`;
+  const rememberIntent = captureIntentOnClick('event', eventSlug);
 
   const actionsByState = (() => {
     switch (state) {
@@ -88,7 +101,7 @@ export default function RegisterPanel(props: RegisterPanelProps) {
             <Button icon={Ticket} className="w-full" onClick={() => setDialog('quick')}>
               Hemen Kaydol
             </Button>
-            <ButtonLink href={loginHref} variant="outline" icon={LogIn} className="w-full">
+            <ButtonLink href={loginHref} variant="outline" icon={LogIn} className="w-full" onClick={rememberIntent}>
               Giriş yaparak kaydol
             </ButtonLink>
           </div>
@@ -193,7 +206,7 @@ export default function RegisterPanel(props: RegisterPanelProps) {
             <strong className="text-gray-900">{eventTitle}</strong>
             <br />
             Zaten hesabın var mı?{' '}
-            <a href={loginHref} className="font-bold text-primary-600 hover:underline">
+            <a href={loginHref} onClick={rememberIntent} className="font-bold text-primary-600 hover:underline">
               Giriş yap
             </a>
           </p>

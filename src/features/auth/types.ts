@@ -30,3 +30,14 @@ export interface RegisterInput {
   readonly email: string;
   readonly password: string;
 }
+
+/** Sosyal giriş kimlik bilgisi (api-docs-v2 → auth/oauth-login). */
+export type OAuthCredential =
+  | { readonly provider: 'google'; readonly idToken: string }
+  | { readonly provider: 'linkedin'; readonly code: string; readonly redirectUri: string };
+
+/** LinkedIn yönlendirmesi sürerken oturumda tutulan CSRF durumu (10 dk). */
+export interface OAuthState {
+  readonly state: string;
+  readonly redirect: string;
+}

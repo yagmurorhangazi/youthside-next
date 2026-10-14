@@ -4,6 +4,7 @@
  * Referans: youthside-2026-ui/panelim/profilim/index.php
  * Veri: auth/me (profil) · candidates/profile-completeness
  * ?redirect=/… → başvuru akışından gelindiyse, profil yeterli olunca ilana dönüş düğmesi gösterilir.
+ * Bekleyen başvuru niyeti varsa eşik geçildiğinde global popup (BaseLayout) başvuruyu tamamlatır.
  */
 import { safeRedirect } from '@/config/site';
 import { createSafeLoader } from '@/core/safe';
@@ -30,7 +31,23 @@ const returnTo = rawReturn ? safeRedirect(rawReturn) : null;
       <div class="space-y-6">
         <div class:list={['grid gap-5', completeness && 'xl:grid-cols-[0.8fr_1.2fr]']}>
           {completeness && <CompletenessCard completeness={completeness} showLink={false} />}
-          <MediaUploads client:visible name={profile.fullName} avatarUrl={profile.avatarUrl} resumeUrl={profile.resumeUrl} />
+          <MediaUploads
+            client:visible
+            name={profile.fullName}
+            avatarUrl={profile.avatarUrl}
+            resumeUrl={profile.resumeUrl}
+            resumeData={{
+              fullName: profile.fullName,
+              email: profile.email,
+              phone: profile.phone,
+              university: profile.university,
+              department: profile.department,
+              grade: profile.grade,
+              graduationYear: profile.graduationYear ? String(profile.graduationYear) : null,
+              linkedinUrl: profile.linkedinUrl,
+              githubUrl: profile.githubUrl,
+            }}
+          />
         </div>
         <ProfileDetailsForm client:load profile={profile} returnTo={returnTo} />
         <ChangePasswordForm client:visible />

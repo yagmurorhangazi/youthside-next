@@ -6,6 +6,8 @@
  *
  * Sayfa yalnızca kendi başlık/açıklamasını, isteğe bağlı JSON-LD şemasını ve içeriğini verir.
  * Kullanıcı bilgisi middleware'in hazırladığı `Astro.locals.user`'dan okunur.
+ * Bekleyen başvuru/kayıt niyeti varsa hatırlatıcı island header'ın altına eklenir; yoksa hiç
+ * basılmaz (sıfır JS). Oturum zaten middleware'de okunduğu için ek disk/API maliyeti yoktur.
  */
 import '@/styles/global.css';
 import { SITE } from '@/config/site';
@@ -13,6 +15,7 @@ import CookieConsent from '@/components/layout/CookieConsent';
 import MobileBottomNav from '@/components/layout/MobileBottomNav.astro';
 import SiteFooter from '@/components/layout/SiteFooter.astro';
 import SiteHeader from '@/components/layout/SiteHeader.astro';
+import PendingIntentPrompt from '@/features/intent/components/PendingIntentPrompt';
 
 interface Props {
   title?: string;
@@ -46,6 +49,8 @@ const fullTitle = title.includes(SITE.name) ? title : `${title} | ${SITE.name}`;
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
 const shareImage = image || SITE.logo;
 const user = Astro.locals.user;
+// Odaklı akışlarda (giriş/kayıt) hatırlatıcı gösterilmez; kullanıcı zaten o adımı tamamlıyor.
+const pendingIntent = chrome === 'full' ? await Astro.locals.services.intent.summary() : null;
 ---
 
 <!doctype html>
@@ -99,6 +104,7 @@ const user = Astro.locals.user;
     </a>
 
     {chrome === 'full' && <SiteHeader user={user} />}
+    {pendingIntent && <PendingIntentPrompt client:idle summary={pendingIntent} isLoggedIn={Boolean(user)} currentPath={Astro.url.pathname} />}
 
     <main id="main-content" class="grow">
       <slot />

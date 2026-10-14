@@ -9,10 +9,13 @@
  * Kurallar (api-docs-v2 → Vitrin notları):
  *   - İlan slug'ı global benzersiz; URL'deki şirket slug'ı eşleşmezse doğru adrese 301 yönlendirilir.
  *   - Görüntülenme sayacı tarayıcıdan çağrılır (ViewTracker).
+ *   - `?devam=1` (doğrulama e-postası başka cihazda açıldıysa): girişli adayın niyeti yeniden kurulur,
+ *     işaret temizlenmiş adrese yönlendirilir; popup kaldığı yerden devam ettirir.
  */
 import { Briefcase, Building2, CalendarClock, CalendarPlus, House, Layers, MapPin, Users } from 'lucide-react';
 import { ROUTES } from '@/config/site';
 import { createSafeLoader } from '@/core/safe';
+import { RESUME_PARAM } from '@/features/intent/lib/intent-rules';
 import ApplyPanel from '@/features/jobs/components/ApplyPanel';
 import JobCard from '@/features/jobs/components/JobCard.astro';
 import { resolveApplyState } from '@/features/jobs/lib/apply-state';
@@ -26,7 +29,7 @@ import Container from '@/shared/ui/Container.astro';
 import ViewTracker from '@/shared/ui/ViewTracker.astro';
 
 const { company: companySlug = '', job: jobSlug = '' } = Astro.params;
-const { jobs, candidate } = Astro.locals.services;
+const { jobs, candidate, intent } = Astro.locals.services;
 const user = Astro.locals.user;
 
 const job = await jobs.getBySlug(jobSlug);
@@ -34,6 +37,10 @@ if (!job) return Astro.rewrite('/404');
 
 const canonicalPath = ROUTES.jobDetail(job.company.slug, job.slug);
 if (job.company.slug && job.company.slug !== companySlug) return Astro.redirect(canonicalPath, 301);
+if (Astro.url.searchParams.has(RESUME_PARAM)) {
+  if (user) await intent.capture('job', job.slug);
+  return Astro.redirect(canonicalPath, 302);
+}
 
 const safe = createSafeLoader('ILAN_DETAY');
 const [hasApplied, completeness, companyJobs] = await Promise.all([
@@ -133,6 +140,7 @@ const facts = [
         <ApplyPanel
           client:load
           jobId={job.id}
+          jobSlug={job.slug}
           jobTitle={job.title}
           companyName={job.company.name}
           jobPath={canonicalPath}

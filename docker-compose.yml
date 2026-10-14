@@ -1,0 +1,32 @@
+# [MODÜL: DOCKER COMPOSE]
+# Amaç: Uygulamayı tek komutla ayağa kaldırmak. Port yalnızca sunucunun kendisine (127.0.0.1) açılır;
+# dış dünyaya Apache (TLS + reverse proxy) üzerinden erişilir.
+#
+#   docker compose build --build-arg PUBLIC_API_URL=https://api.youthside.co/api
+#   docker compose up -d
+#
+# Oturum temizliği (host crontab, saatte bir — ek container/süreç gerekmez):
+#   0 * * * * cd /srv/youthside-next && docker compose exec -T web node scripts/cleanup-sessions.mjs
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        PUBLIC_API_URL: ${PUBLIC_API_URL:-https://api.youthside.co/api}
+    image: youthside-next:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4321:4321"
+    volumes:
+      # Oturumlar deploy/yeniden başlatma sonrasında korunur (kullanıcılar çıkış yapmış olmaz).
+      - sessions:/app/.sessions
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  sessions:
