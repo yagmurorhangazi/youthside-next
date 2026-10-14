@@ -6,9 +6,8 @@
  *        bileşen değiştirilmez).
  */
 
-import { Briefcase, Building2, CalendarCheck, CalendarDays, FileText, LayoutDashboard, UserRound, Users } from 'lucide-react';
 import type { SocialPlatform } from '@/features/companies/types';
-import type { NavIcon } from '@/shared/ui';
+import { Briefcase, Building2, CalendarCheck, CalendarDays, FileText, LayoutDashboard, UserRound, Users, type NavIcon } from '@/shared/ui';
 
 export const SITE = {
   name: 'Youthside',

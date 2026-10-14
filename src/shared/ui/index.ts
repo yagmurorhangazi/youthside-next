@@ -12,6 +12,8 @@ export * from '../ui-kit';
 export * from './ButtonLink';
 export * from './FormAlert';
 export * from './FormField';
+export * from './icons';
 export * from './NameInput';
 export * from './PasswordInput';
 export * from './Popover';
+export * from './SearchableSelect';

@@ -11,8 +11,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type SubmitEvent } from 'react';
-import { ArrowUpDown, Briefcase, Check, Globe, History, House, ListFilter, MapPin, Search, SlidersHorizontal, X } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { type AppIcon, ArrowUpDown, Briefcase, Check, Globe, History, ListFilter, MapPin, Search, SlidersHorizontal, Workplace, X } from '@/shared/ui';
 import { buildHref, type ParamState } from '@/shared/lib/search-params';
 import { Popover, PopoverHeader, SelectMenu, ToolbarButton } from '@/shared/ui';
 
@@ -20,7 +19,7 @@ import { Popover, PopoverHeader, SelectMenu, ToolbarButton } from '@/shared/ui';
  * Filtre ikonları isimle verilir: Astro → React island sınırında bileşen (fonksiyon)
  * serileştirilemediği için sayfa yalnızca adı gönderir, eşleme burada yapılır.
  */
-const GROUP_ICONS = { briefcase: Briefcase, house: House, 'map-pin': MapPin, globe: Globe } satisfies Record<string, LucideIcon>;
+const GROUP_ICONS = { briefcase: Briefcase, house: Workplace, 'map-pin': MapPin, globe: Globe } satisfies Record<string, AppIcon>;
 export type FilterIconName = keyof typeof GROUP_ICONS;
 
 export interface FilterGroup {

@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useStore } from '@nanostores/react';
 import { actions } from 'astro:actions';
-import { Camera, CheckCircle2, FileText, Sparkles, Upload } from 'lucide-react';
+import { Camera, CheckCircle2, FileText, Sparkles, Upload } from '@/shared/ui';
 import { toFormErrors } from '@/shared/lib/action-result';
 import { FormAlert, UserAvatar } from '@/shared/ui';
 import { generateAndUploadResume } from '../generate-resume';

@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@/shared/ui';
 import { Modal } from '@/shared/ui';
 import type { Award } from '../types';
 

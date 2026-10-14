@@ -9,7 +9,7 @@
 
 import { useId, useState, type FormEvent } from 'react';
 import { actions } from 'astro:actions';
-import { LogIn, Mail, ShieldCheck } from 'lucide-react';
+import { LogIn, Mail, ShieldCheck } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { NO_ERRORS, toFormErrors, withFieldError, type FormErrorState } from '@/shared/lib/action-result';
 import { emailIssue } from '@/shared/lib/email';
@@ -82,7 +82,7 @@ export default function LoginForm({ redirect, initialEmail = '', notice }: Login
   const checkEmail = (value: string) => setErrors((prev) => withFieldError(prev, 'email', value.trim() ? emailIssue(value) : null));
 
   return (
-    <form onSubmit={onSubmit} autoComplete="off" noValidate className="space-y-4">
+    <form onSubmit={onSubmit} autoComplete="off" noValidate className="space-y-3.5">
       {info && <FormAlert variant="success">{info}</FormAlert>}
       {errors.message && <FormAlert>{errors.message}</FormAlert>}
       {unverified && (
@@ -135,7 +135,7 @@ export default function LoginForm({ redirect, initialEmail = '', notice }: Login
               />
             )}
           </FormField>
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-0.5">
             <a href={ROUTES.forgotPassword} className="text-sm font-semibold text-primary-600 hover:underline">
               Şifremi unuttum
             </a>
@@ -169,7 +169,7 @@ export default function LoginForm({ redirect, initialEmail = '', notice }: Login
         </>
       )}
 
-      <Button type="submit" icon={LogIn} isLoading={pending} className="w-full shadow-lg shadow-primary-700/15">
+      <Button type="submit" icon={LogIn} isLoading={pending} className="w-full shadow-md shadow-primary-700/15">
         {step === 'otp' ? 'Doğrula ve giriş yap' : 'Giriş yap'}
       </Button>
 

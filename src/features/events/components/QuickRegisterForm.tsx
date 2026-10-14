@@ -10,7 +10,7 @@
 
 import { useId, useState, type FormEvent } from 'react';
 import { actions } from 'astro:actions';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { allRequiredAccepted, ContractChecklist } from '@/features/common/components/ContractChecklist';
 import type { Contract } from '@/features/common/types';

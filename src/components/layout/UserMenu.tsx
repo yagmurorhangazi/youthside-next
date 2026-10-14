@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useId, useRef, useState } from 'react';
-import { ChevronDown, LogOut } from 'lucide-react';
+import { ChevronDown, LogOut } from '@/shared/ui';
 import { ACCOUNT_NAV, ROUTES } from '@/config/site';
 import type { SessionUser } from '@/features/auth/types';
 import { POPOVER_PANEL, UserAvatar, useClickOutside } from '@/shared/ui';

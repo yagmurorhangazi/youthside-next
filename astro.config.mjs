@@ -72,6 +72,12 @@ export default defineConfig({
   }),
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    // Upstream UI kit aynası değiştirilmez; eski ikon modülü React Icons adaptörüne yönlenir.
+    resolve: {
+      alias: {
+        'lucide-react': new URL('./src/shared/ui/ui-kit-icon-adapter.ts', import.meta.url).pathname,
+      },
+    },
   }
 });

@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Cookie } from 'lucide-react';
+import { Cookie } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { Button } from '@/shared/ui';
 

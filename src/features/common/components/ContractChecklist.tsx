@@ -4,7 +4,7 @@
  * Kullanım: İlan başvurusu ve etkinlik kaydı formları (DRY). Belge yeni sekmede açılır.
  */
 
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from '@/shared/ui';
 import type { Contract } from '../types';
 
 interface ContractChecklistProps {

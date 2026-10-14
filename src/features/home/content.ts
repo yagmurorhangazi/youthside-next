@@ -4,8 +4,7 @@
  *       bileşenlerden ayırmak. İçerik değişikliği için şablona dokunulmaz (SRP).
  */
 
-import { Bolt, BrainCircuit, GraduationCap } from 'lucide-react';
-import type { NavIcon } from '@/shared/ui';
+import { Bolt, BrainCircuit, GraduationCap, type NavIcon } from '@/shared/ui';
 
 /** Özellik kartı renk temaları — Tailwind sınıfları tam yazılır ki derleyici tarayabilsin. */
 export type FeatureTone = 'primary' | 'blue' | 'purple';

@@ -11,7 +11,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { actions } from 'astro:actions';
-import { AlertCircle, CalendarCheck, CheckCircle2, Clock, ExternalLink, LogIn, Ticket, UsersRound } from 'lucide-react';
+import { AlertCircle, CalendarCheck, CheckCircle2, Clock, ExternalLink, LogIn, Ticket, UsersRound } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { allRequiredAccepted, ContractChecklist } from '@/features/common/components/ContractChecklist';
 import type { Contract } from '@/features/common/types';

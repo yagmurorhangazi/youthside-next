@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { ArrowRight, Home, LogIn, LogOut, Menu, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Home, LogIn, LogOut, Menu, Sparkles, X } from '@/shared/ui';
 import { ACCOUNT_NAV, MAIN_NAV, ROUTES, SITE } from '@/config/site';
 import type { SessionUser } from '@/features/auth/types';
 import { ButtonLink, UserAvatar, isPathActive } from '@/shared/ui';

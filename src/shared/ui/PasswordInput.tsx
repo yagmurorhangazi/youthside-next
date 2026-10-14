@@ -5,7 +5,7 @@
  */
 
 import { forwardRef, useState, type InputHTMLAttributes } from 'react';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { Eye, EyeOff, Lock } from './icons';
 import { Input } from '../ui-kit';
 
 type PasswordInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { error?: string };

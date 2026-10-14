@@ -12,8 +12,7 @@
  */
 
 import { forwardRef, useCallback, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, type AppIcon } from './icons';
 import { useClickOutside } from '../ui-kit';
 
 /** Açılır panellerin ortak yüzeyi: yumuşak derin gölge + ince çerçeve + giriş animasyonu. */
@@ -23,7 +22,7 @@ export const POPOVER_PANEL =
 // ── ToolbarButton ────────────────────────────────────────────────────────────
 
 export interface ToolbarButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  readonly icon?: LucideIcon;
+  readonly icon?: AppIcon;
   /** Filtre uygulanmış (dolu) görünüm. */
   readonly active?: boolean;
   /** Paneli açık olduğunda vurgulu çerçeve. */
@@ -163,7 +162,7 @@ export interface SelectMenuOption {
 
 interface SelectMenuProps {
   readonly label: string;
-  readonly icon?: LucideIcon;
+  readonly icon?: AppIcon;
   readonly options: readonly SelectMenuOption[];
   readonly value: string;
   readonly onChange: (value: string) => void;

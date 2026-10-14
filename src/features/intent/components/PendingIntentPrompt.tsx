@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
 import { actions } from 'astro:actions';
-import { ArrowRight, BellRing, LogIn, UserRoundCog, X } from 'lucide-react';
+import { ArrowRight, BellRing, LogIn, UserRoundCog, X } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { $completeness } from '@/features/candidate/store';
 import type { IntentPrompt, IntentSummary } from '../types';

@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronLeft, ChevronRight, Images, Maximize2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Images, Maximize2, X } from '@/shared/ui';
 
 interface GalleryGridProps {
   readonly images: readonly { readonly id: string; readonly imageUrl: string; readonly title: string | null }[];

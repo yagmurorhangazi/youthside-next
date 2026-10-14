@@ -6,7 +6,7 @@ Bu dosya Claude Code ve diğer AI ajanları için **bağlayıcı** proje talimat
 
 Youthside kariyer platformunun (öğrenci/yeni mezun ↔ şirket, ilan, etkinlik, kulüp) yeni nesil web arayüzü.
 
-- **Stack:** Astro 7 · React 19 · TypeScript (strict) · Tailwind CSS v4 · `lucide-react` ikonlar
+- **Stack:** Astro 7 · React 19 · TypeScript (strict) · Tailwind CSS v4 · `react-icons` (Phosphor) ikonlar
 - **Mantık referansı:** https://github.com/FerhatCengz/youthside-2026-ui (`main` branch, PHP + jQuery). Sayfaların içeriği, iş kuralları ve akışları buradan alınır; kod birebir kopyalanmaz, bu projenin mimarisine çevrilir.
 - **UI referansı:** https://github.com/FerhatCengz/youthside-ui-kit. Bileşenler buradan kullanılır, eksikler genişletilir (aşağıya bkz.).
 - Arayüz dili Türkçe'dir; `<html lang="tr">`, tarih/sayı biçimleri `tr-TR`.
@@ -59,9 +59,12 @@ src/
 
 ## UI Kit
 
-- `src/shared/ui-kit/` paketin aynasıdır; değiştirilmez. Kit'te olan bir bileşen tekrar yazılmaz.
+- `src/shared/ui-kit/` paketin **tam** aynasıdır (upstream `src/` tamamı); değiştirilmez. Kit'te olan bir bileşen tekrar yazılmaz.
+  Yeni bir parça yazmadan önce kit'in dışa aktarımlarına bakılır (ör. aranabilir seçim → `Autocomplete`, tarih → `DateRangeFilter`,
+  yükleme → `ImageDropzone`, tablo → `DataTable`, yan panel → `Sheet`).
+- Giriş noktaları: `@/shared/ui` (ana), `@/shared/ui/editor` (`RichTextEditor`, `client:only="react"`), `@/shared/ui/data` (`ImportResultModal`).
 - Kit'te olmayan parça `src/shared/ui/` altına yazılır ve `index.ts`'e eklenir.
-- Kit'ten yeni bileşen gerekirse upstream'den kopyalanır, `ui-kit/index.ts` ve `ui-kit/README.md` güncellenir.
+- Kit güncellemesi, upstream farkları ve ikon adaptörü (`lucide-react` → Phosphor) `ui-kit/README.md`'dedir.
 - GitHub Packages token'ı tanımlandığında pakete geçiş adımları `src/shared/ui-kit/README.md`'dedir.
 
 ## Mevcut durum (2026-10-13)

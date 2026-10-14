@@ -15,9 +15,31 @@ import PanelLayout from '@/features/candidate/components/PanelLayout.astro';
 import ProfileDetailsForm from '@/features/candidate/components/ProfileDetailsForm';
 import ErrorNotice from '@/shared/ui/ErrorNotice.astro';
 
-const { candidate } = Astro.locals.services;
+const { candidate, lookups } = Astro.locals.services;
 const safe = createSafeLoader('PROFILIM');
-const [profile, completeness] = await Promise.all([safe(candidate.getProfile(), 'Profil'), safe(candidate.getCompleteness(), 'Doluluk')]);
+const [profile, completeness, educationResult] = await Promise.all([
+  safe(candidate.getProfile(), 'Profil'),
+  safe(candidate.getCompleteness(), 'Doluluk'),
+  safe(
+    Promise.all([lookups.universities(), lookups.universityDepartments(), lookups.classes()]).then(([universities, departments, grades]) => ({
+      universities,
+      departments,
+      grades,
+    })),
+    'Eğitim seçenekleri',
+  ),
+]);
+
+const educationOptions = {
+  universities: educationResult?.universities ?? [],
+  departments: educationResult?.departments ?? [],
+  grades: educationResult?.grades ?? [],
+  failed:
+    !educationResult ||
+    educationResult.universities.length === 0 ||
+    educationResult.departments.length === 0 ||
+    educationResult.grades.length === 0,
+};
 
 const rawReturn = Astro.url.searchParams.get('redirect');
 const returnTo = rawReturn ? safeRedirect(rawReturn) : null;
@@ -49,7 +71,7 @@ const returnTo = rawReturn ? safeRedirect(rawReturn) : null;
             }}
           />
         </div>
-        <ProfileDetailsForm client:load profile={profile} returnTo={returnTo} />
+        <ProfileDetailsForm client:load profile={profile} returnTo={returnTo} educationOptions={educationOptions} />
         <ChangePasswordForm client:visible />
       </div>
     )

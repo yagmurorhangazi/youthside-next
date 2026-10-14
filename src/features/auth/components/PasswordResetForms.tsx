@@ -9,7 +9,7 @@
 
 import { useId, useState, type FormEvent } from 'react';
 import { actions } from 'astro:actions';
-import { Mail, MailCheck } from 'lucide-react';
+import { Mail, MailCheck } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
 import { Button, ButtonLink, FormAlert, FormField, Input, PasswordInput } from '@/shared/ui';

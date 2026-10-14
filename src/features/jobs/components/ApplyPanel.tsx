@@ -13,7 +13,7 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
-import { AlertCircle, ArrowRight, CheckCircle2, Clock, ExternalLink, LogIn, Send, UserRoundCog } from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2, Clock, ExternalLink, LogIn, Send, UserRoundCog } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import type { Contract } from '@/features/common/types';
 import { captureIntentOnClick } from '@/features/intent/capture';

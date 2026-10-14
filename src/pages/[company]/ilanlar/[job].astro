@@ -12,7 +12,7 @@
  *   - `?devam=1` (doğrulama e-postası başka cihazda açıldıysa): girişli adayın niyeti yeniden kurulur,
  *     işaret temizlenmiş adrese yönlendirilir; popup kaldığı yerden devam ettirir.
  */
-import { Briefcase, Building2, CalendarClock, CalendarPlus, House, Layers, MapPin, Users } from 'lucide-react';
+import { Briefcase, Building2, CalendarClock, CalendarPlus, Layers, MapPin, Users, Workplace } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { createSafeLoader } from '@/core/safe';
 import { RESUME_PARAM } from '@/features/intent/lib/intent-rules';
@@ -64,7 +64,7 @@ const expiry = parseDate(job.expirationDate);
 
 const facts = [
   { icon: Briefcase, label: 'Çalışma tipi', value: job.type },
-  { icon: House, label: 'Çalışma modeli', value: job.workModel },
+  { icon: Workplace, label: 'Çalışma modeli', value: job.workModel },
   { icon: MapPin, label: 'Lokasyon', value: job.locations.join(', ') || null },
   { icon: Layers, label: 'Kategori', value: job.category },
   { icon: CalendarPlus, label: 'Yayın tarihi', value: published ? `${formatLongDate(published)} (${formatRelative(published)})` : null },

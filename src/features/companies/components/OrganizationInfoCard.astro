@@ -5,7 +5,7 @@
  * Neden: Profil başlığını kalabalıklaştırmadan sektör, çalışan sayısı ve web sitesi için taranabilir bir özet sunar.
  * Referans: youthside-2026-ui şirket profili yan bilgi alanı; görsel dil Youthside tasarım sistemine uyarlanmıştır.
  */
-import { Building2, ExternalLink, Globe2, GraduationCap, UsersRound, type LucideIcon } from 'lucide-react';
+import { Building2, ExternalLink, Globe2, GraduationCap, UsersRound, type AppIcon } from '@/shared/ui';
 import type { CompanyProfile } from '../types';
 import SocialLinks from './SocialLinks.astro';
 
@@ -19,7 +19,7 @@ const isClub = profile.type === 'club';
 interface Fact {
   label: string;
   value: string;
-  icon: LucideIcon;
+  icon: AppIcon;
 }
 
 const facts = (

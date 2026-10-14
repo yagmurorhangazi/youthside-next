@@ -7,7 +7,7 @@
  * Referans: youthside-2026-ui/panelim/index.php (sekmeli panel yapısı)
  * Erişim kontrolü middleware'dedir; buraya giriş yapmamış kullanıcı gelemez.
  */
-import { LogOut } from 'lucide-react';
+import { LogOut } from '@/shared/ui';
 import { ACCOUNT_NAV, ROUTES } from '@/config/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { UserAvatar, isPathActive } from '@/shared/ui';
@@ -29,9 +29,11 @@ const isActive = (href: string) => (href === ROUTES.dashboard ? path === href ||
 <BaseLayout title={title} noindex muted>
   <div class="min-w-0 bg-slate-50/70">
     <Container class="py-6 md:py-10">
-    <div class="grid items-start gap-6 lg:grid-cols-[232px_minmax(0,1fr)] lg:gap-8">
+    <!-- Mobilde `grid-cols-1` (minmax(0,1fr)) şart: örtük `auto` iz, yatay sekme menüsünün tüm genişliğini
+         alıp sayfayı 360px'te taşırıyordu; tarayıcı uzaklaştırınca açılır paneller görünür alanın dışına düşüyordu. -->
+    <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[232px_minmax(0,1fr)] lg:gap-8">
       <!-- Kenar menüsü -->
-      <aside class="lg:self-start">
+      <aside class="min-w-0 lg:self-start">
         <div class="hidden border-r border-slate-200 pr-5 lg:block">
           <div class="flex items-center gap-3 px-2 pb-5">
             <UserAvatar name={user.name} src={user.avatarUrl} size="lg" online />

@@ -6,6 +6,7 @@
  * Erişilebilirlik: Beş eşit dokunma hedefi, aktif sayfa bildirimi ve iPhone güvenli alan desteği sağlar.
  */
 import {
+  type AppIcon,
   BriefcaseBusiness,
   Building2,
   CalendarCheck,
@@ -15,8 +16,7 @@ import {
   LayoutDashboard,
   LogIn,
   UserRound,
-  type LucideIcon,
-} from 'lucide-react';
+} from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import type { SessionUser } from '@/features/auth/types';
 import { isPathActive } from '@/shared/ui';
@@ -28,7 +28,7 @@ interface Props {
 interface BottomNavItem {
   label: string;
   href: string;
-  icon: LucideIcon;
+  icon: AppIcon;
   exact?: boolean;
   /** Detay rotaları ana dizinden farklı olduğunda aktif sekmeyi korur. */
   aliases?: readonly string[];

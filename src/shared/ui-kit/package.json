@@ -1,0 +1,5 @@
+{
+  "name": "@ferhatcengz/youthside-ui-kit-local-mirror",
+  "private": true,
+  "sideEffects": ["*.css"]
+}

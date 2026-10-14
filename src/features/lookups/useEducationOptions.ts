@@ -2,7 +2,7 @@
  * [MODÜL: EĞİTİM SEÇENEKLERİ HOOK'U — İSTEMCİ]
  * Amaç: Üniversite, bölüm ve sınıf listelerini form açıldığında bir kez almak.
  * Kullanım: Hızlı etkinlik kaydı ve profil formu (DRY). Listeler sunucuda önbelleklidir.
- * Hata olursa boş liste döner; alanlar serbest metin olarak çalışmaya devam eder.
+ * Yükleme/hata durumu ayrıca döner; seçim alanları kullanıcıya doğru geri bildirimi verir.
  */
 
 import { useEffect, useState } from 'react';
@@ -12,9 +12,11 @@ export interface EducationOptions {
   readonly universities: readonly string[];
   readonly departments: readonly string[];
   readonly grades: readonly string[];
+  readonly loading: boolean;
+  readonly failed: boolean;
 }
 
-const EMPTY: EducationOptions = { universities: [], departments: [], grades: [] };
+const EMPTY: EducationOptions = { universities: [], departments: [], grades: [], loading: true, failed: false };
 
 export function useEducationOptions(): EducationOptions {
   const [options, setOptions] = useState<EducationOptions>(EMPTY);
@@ -24,9 +26,11 @@ export function useEducationOptions(): EducationOptions {
     actions.lookups
       .education({})
       .then(({ data }) => {
-        if (active && data) setOptions(data);
+        if (active) setOptions(data ? { ...data, loading: false, failed: false } : { ...EMPTY, loading: false, failed: true });
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) setOptions({ ...EMPTY, loading: false, failed: true });
+      });
     return () => {
       active = false;
     };

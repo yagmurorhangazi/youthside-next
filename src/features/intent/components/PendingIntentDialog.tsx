@@ -10,7 +10,7 @@
  */
 
 import { useRef, useState } from 'react';
-import { ArrowRight, CalendarCheck, CheckCircle2, Clock, Send, Ticket } from 'lucide-react';
+import { ArrowRight, CalendarCheck, CheckCircle2, Clock, Send, Ticket } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { allRequiredAccepted, ContractChecklist } from '@/features/common/components/ContractChecklist';
 import { ApplicationForm } from '@/features/jobs/components/ApplicationForm';

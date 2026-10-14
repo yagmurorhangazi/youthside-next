@@ -7,7 +7,7 @@
 
 import { useId, useState, type SubmitEvent } from 'react';
 import { actions } from 'astro:actions';
-import { ArrowRight, Check, Mail, MailCheck, ShieldCheck, User } from 'lucide-react';
+import { ArrowRight, Check, Mail, MailCheck, ShieldCheck, User } from '@/shared/ui';
 import { ROUTES } from '@/config/site';
 import { NO_ERRORS, toFormErrors, withFieldError, type FormErrorState } from '@/shared/lib/action-result';
 import { emailIssue } from '@/shared/lib/email';

@@ -5,7 +5,7 @@
 
 import { useId, useState, type FormEvent } from 'react';
 import { actions } from 'astro:actions';
-import { KeyRound, ShieldCheck } from 'lucide-react';
+import { KeyRound, ShieldCheck } from '@/shared/ui';
 import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
 import { Button, FormAlert, FormField, PasswordInput } from '@/shared/ui';
 

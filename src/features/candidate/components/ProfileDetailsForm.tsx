@@ -13,11 +13,10 @@
 
 import { useId, useState, type FormEvent } from 'react';
 import { actions } from 'astro:actions';
-import { ArrowRight, GraduationCap, Link2, Save, UserRound } from 'lucide-react';
-import { useEducationOptions } from '@/features/lookups/useEducationOptions';
+import { ArrowRight, Building2, GraduationCap, Layers, Link2, Save, SearchableSelect, UserRound } from '@/shared/ui';
 import { NO_ERRORS, toFormErrors, type FormErrorState } from '@/shared/lib/action-result';
 import { capitalizePersonName } from '@/shared/lib/text';
-import { Button, ButtonLink, FormAlert, FormField, Input, NameInput, Select } from '@/shared/ui';
+import { Button, ButtonLink, FormAlert, FormField, Input, NameInput } from '@/shared/ui';
 import { generateAndUploadResume } from '../generate-resume';
 import { $completeness, $resumeData, $resumeUrl } from '../store';
 import { GENDERS, type CandidateProfile, type ResumeData } from '../types';
@@ -26,10 +25,18 @@ interface ProfileDetailsFormProps {
   readonly profile: CandidateProfile;
   /** Başvuru akışından gelindiyse dönülecek ilan adresi. */
   readonly returnTo: string | null;
+  /** Uzun lookup listeleri sayfa SSR'ında alınır; island açıldığında ikinci istek beklenmez. */
+  readonly educationOptions: {
+    readonly universities: readonly string[];
+    readonly departments: readonly string[];
+    readonly grades: readonly string[];
+    readonly failed: boolean;
+  };
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 16 }, (_, i) => String(CURRENT_YEAR + 6 - i));
+const optionsOf = (values: readonly string[]) => values.map((value) => ({ value, label: value }));
 
 function Section({ icon: Icon, title, description, children }: { icon: typeof UserRound; title: string; description: string; children: React.ReactNode }) {
   return (
@@ -44,18 +51,23 @@ function Section({ icon: Icon, title, description, children }: { icon: typeof Us
           <p className="mt-0.5 text-xs leading-5 text-slate-400">{description}</p>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+      {/* `grid-cols-1`: uzun seçili değer (ör. üniversite adı) izi genişletip formu taşırmasın. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
     </fieldset>
   );
 }
 
-export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetailsFormProps) {
+export default function ProfileDetailsForm({ profile, returnTo, educationOptions }: ProfileDetailsFormProps) {
   const uid = useId();
-  const education = useEducationOptions();
   const [errors, setErrors] = useState<FormErrorState>(NO_ERRORS);
   const [pending, setPending] = useState(false);
   const [resumeStep, setResumeStep] = useState<'idle' | 'generating' | 'generated' | 'failed'>('idle');
   const [result, setResult] = useState<{ percentage: number; isEligible: boolean } | null>(null);
+  const [gender, setGender] = useState(profile.gender ?? '');
+  const [university, setUniversity] = useState(profile.university ?? '');
+  const [department, setDepartment] = useState(profile.department ?? '');
+  const [grade, setGrade] = useState(profile.grade ?? '');
+  const [graduationYear, setGraduationYear] = useState(profile.graduationYear ? String(profile.graduationYear) : '');
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -138,11 +150,15 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
         </FormField>
         <FormField id={id('gender')} label="Cinsiyet" error={err('gender')}>
           {(a11y) => (
-            <Select
+            <SearchableSelect
               id={id('gender')}
               name="gender"
-              defaultValue={profile.gender ?? ''}
-              options={[{ value: '', label: 'Seçiniz' }, ...GENDERS.map((gender) => ({ value: gender, label: gender }))]}
+              value={gender}
+              onChange={setGender}
+              searchable={false}
+              clearable
+              placeholder="Seçiniz"
+              options={optionsOf(GENDERS)}
               {...a11y}
             />
           )}
@@ -151,47 +167,74 @@ export default function ProfileDetailsForm({ profile, returnTo }: ProfileDetails
 
       <Section icon={GraduationCap} title="Eğitim bilgileri" description="Sana uygun fırsatların eşleşmesi için eğitim durumunu ekle.">
         <FormField id={id('university')} label="Üniversite" error={err('university')} className="sm:col-span-2">
-          {(a11y) => <Input id={id('university')} name="university" list={`${uid}-universities`} defaultValue={profile.university ?? ''} {...a11y} />}
+          {(a11y) => (
+            <SearchableSelect
+              id={id('university')}
+              name="university"
+              value={university}
+              onChange={(nextUniversity) => {
+                setUniversity(nextUniversity);
+                if (nextUniversity !== university) setDepartment('');
+              }}
+              options={optionsOf(educationOptions.universities)}
+              icon={Building2}
+              placeholder="Üniversiteni seç"
+              searchPlaceholder="Üniversite ara…"
+              emptyMessage={educationOptions.failed ? 'Üniversiteler şu anda alınamadı. Lütfen tekrar dene.' : 'Bu adla bir üniversite bulunamadı.'}
+              clearable
+              {...a11y}
+            />
+          )}
         </FormField>
         <FormField id={id('department')} label="Bölüm" error={err('department')} className="sm:col-span-2">
-          {(a11y) => <Input id={id('department')} name="department" list={`${uid}-departments`} defaultValue={profile.department ?? ''} {...a11y} />}
+          {(a11y) => (
+            <SearchableSelect
+              id={id('department')}
+              name="department"
+              value={department}
+              onChange={setDepartment}
+              options={optionsOf(educationOptions.departments)}
+              icon={Layers}
+              placeholder={university ? 'Bölümünü seç' : 'Önce üniversiteni seç'}
+              searchPlaceholder="Bölüm ara…"
+              emptyMessage={educationOptions.failed ? 'Bölümler şu anda alınamadı. Lütfen tekrar dene.' : 'Bu adla bir bölüm bulunamadı.'}
+              disabled={!university}
+              clearable
+              {...a11y}
+            />
+          )}
         </FormField>
         <FormField id={id('grade')} label="Sınıf / durum" error={err('grade')}>
           {(a11y) => (
-            <Select
+            <SearchableSelect
               id={id('grade')}
               name="grade"
-              defaultValue={profile.grade ?? ''}
+              value={grade}
+              onChange={setGrade}
+              searchable={false}
+              clearable
+              placeholder="Seçiniz"
               // Kayıtlı değer listede yoksa da seçili görünmesi için eklenir.
-              options={[
-                { value: '', label: 'Seçiniz' },
-                ...[...new Set([...(profile.grade ? [profile.grade] : []), ...education.grades])].map((grade) => ({ value: grade, label: grade })),
-              ]}
+              options={optionsOf([...new Set([...(profile.grade ? [profile.grade] : []), ...educationOptions.grades])])}
               {...a11y}
             />
           )}
         </FormField>
         <FormField id={id('graduationYear')} label="Mezuniyet yılı" error={err('graduationYear')}>
           {(a11y) => (
-            <Select
+            <SearchableSelect
               id={id('graduationYear')}
               name="graduationYear"
-              defaultValue={profile.graduationYear ? String(profile.graduationYear) : ''}
-              options={[{ value: '', label: 'Seçiniz' }, ...YEARS.map((year) => ({ value: year, label: year }))]}
+              value={graduationYear}
+              onChange={setGraduationYear}
+              searchable={false}
+              clearable
+              placeholder="Seçiniz"
+              options={optionsOf(YEARS)}
               {...a11y}
             />
           )}
         </FormField>
-        <datalist id={`${uid}-universities`}>
-          {education.universities.map((item) => (
-            <option key={item} value={item} />
-          ))}
-        </datalist>
-        <datalist id={`${uid}-departments`}>
-          {education.departments.map((item) => (
-            <option key={item} value={item} />
-          ))}
-        </datalist>
       </Section>
 
       <Section icon={Link2} title="Profesyonel bağlantılar" description="İşverenlerin çalışmalarını ve deneyimini daha yakından görmesini sağla.">
